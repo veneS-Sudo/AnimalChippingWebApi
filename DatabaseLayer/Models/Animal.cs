@@ -2,19 +2,25 @@ namespace AnimalChippingWebApi.Core.Models;
 
 public class Animal
 {
-    public long Id { get; set; }
-    public IList<AnimalType> AnimalTypes { get; set; } = new List<AnimalType>();
+    public long AnimalId { get; set; }
     public float Height { get; set; }
     public float Weight { get; set; }
     public float Length { get; set; }
     public GenderType Gender { get; set; }
     public LiveStatusType LiveStatus { get; set; }
     
-    public int ChipperId { get; set; }  // the chipper id account
+    public int AccountId { get; set; }  // the chipper id account
     public DateTime ChippingDateTime { get; set; }
-    public long ChippingLocationId { get; set; }    // chipping location 
-    public IList<AnimalVisitedLocation> VisitedLocations { get; set; } = new List<AnimalVisitedLocation>();
     public DateTime DeathDateTime { get; set; }
+    
+    public LocationPoint ChippingLocationPoint { get; set; }    // chipping location 
+    public ICollection<AnimalVisitedLocation> VisitedLocations { get; set; }
+    public ICollection<AnimalType> AnimalTypes { get; set; }
+
+    public Animal()
+    {
+        ChippingDateTime = DateTime.UtcNow;
+    }
 }
 
 public enum GenderType
