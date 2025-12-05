@@ -13,6 +13,9 @@ public class Animal
     public DateTime ChippingDateTime { get; set; }
     public DateTime DeathDateTime { get; set; }
     
+    // soft delete
+    public bool SoftDeleted { get; set; }
+    
     public LocationPoint ChippingLocationPoint { get; set; }    // chipping location 
     public ICollection<AnimalVisitedLocation> VisitedLocations { get; set; }
     public ICollection<AnimalType> AnimalTypes { get; set; }
@@ -20,6 +23,8 @@ public class Animal
     public Animal()
     {
         ChippingDateTime = DateTime.UtcNow;
+        LiveStatus = LiveStatusType.Alive;
+        Gender = GenderType.Other;
     }
 }
 

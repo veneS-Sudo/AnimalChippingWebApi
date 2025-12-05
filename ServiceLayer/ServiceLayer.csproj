@@ -10,4 +10,14 @@
     <ProjectReference Include="..\DatabaseLayer\DatabaseLayer.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="Microsoft.EntityFrameworkCore">
+      <HintPath>..\..\..\..\..\.nuget\packages\microsoft.entityframeworkcore\7.0.20\lib\net6.0\Microsoft.EntityFrameworkCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Admin\Generic\" />
+  </ItemGroup>
+
 </Project>
