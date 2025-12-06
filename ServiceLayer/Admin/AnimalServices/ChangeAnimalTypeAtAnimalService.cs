@@ -14,32 +14,34 @@ public class ChangeAnimalTypeAtAnimalService
         _context = context;
     }
 
-    public Animal AddAnimalTypeAtAnimal(long animalId, AnimalType animalType)
+    public Animal AddAnimalTypeAtAnimal(long animalId, long animalTypeId)
     {
         var animal = _context.Animals
             .Include(a => a.AnimalTypes)
             .Single(a => a.AnimalId == animalId);
-        if (animal.AnimalTypes.All(x => x.AnimalTypeId != animalType.AnimalTypeId))
-        {
-            animal.AnimalTypes.Add(animalType);
-            _context.SaveChanges();
-        }
+        if (animal.AnimalTypes.Any(x => x.AnimalTypeId == animalTypeId))
+            throw new Exception($"Animal type {animalTypeId} already exists");
+        
+        animal.AnimalTypes.Add(_context.AnimalTypes.Single(x => x.AnimalTypeId == animalTypeId));
+        _context.SaveChanges();
         return animal;
     }
 
-    public Animal UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeDto dto)
+    public Animal UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeInAnimalDataDto inAnimalDataDto)
     {
         var animal = _context.Animals
             .Include(a => a.AnimalTypes)
             .Single(a => a.AnimalId == animalId);
-        if (animal.AnimalTypes.All(t => t.AnimalTypeId != dto.OldAnimalType.AnimalTypeId))
-            throw new Exception($"The animal type {dto.OldAnimalType.AnimalTypeId} does not exist");
+        if (animal.AnimalTypes.All(t => t.AnimalTypeId != inAnimalDataDto.OldAnimalTypeId))
+            throw new Exception($"The animal type {inAnimalDataDto.OldAnimalTypeId} does not exist");
         
         using (var transaction = _context.Database.BeginTransaction())
         {
+            // удаление старого типа и добавление нового
             animal.AnimalTypes.Remove(
-                animal.AnimalTypes.Single(t => t.AnimalTypeId == dto.OldAnimalType.AnimalTypeId));
-            animal.AnimalTypes.Add(dto.NewAnimalType);
+                animal.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.OldAnimalTypeId));
+            animal.AnimalTypes.Add(
+                animal.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.NewAnimalTypeId));
         }
         _context.SaveChanges();
         return animal;

@@ -4,4 +4,5 @@ public class AnimalType
 {
     public long AnimalTypeId { get; set; }
     public required string Type { get; set; }
+    public bool SoftDeleted { get; set; }
 }
