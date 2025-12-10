@@ -8,6 +8,9 @@ public static class VisitedLocationExtension
         VisitedLocationFilterBy filterBy,
         string filterValue)
     {
+        if (string.IsNullOrWhiteSpace(filterValue))
+            return source;
+        
         switch (filterBy)
         {
             case VisitedLocationFilterBy.NoFilter:
