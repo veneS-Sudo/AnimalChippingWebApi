@@ -1,24 +1,34 @@
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
 using DatabaseLayer.QueryObjects;
+using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
-using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Admin;
 
 public class VisitedLocationAnimalService
 {
     private readonly AppDbContext _context;
+    private readonly IGenericValidator<Animal> _animalValidator;
+    private readonly IGenericValidator<LocationPoint> _locationPointValidator;
+    private readonly IGenericValidator<AnimalVisitedLocation> _visitedLocationValidator;
 
-    public VisitedLocationAnimalService(AppDbContext context)
+    public VisitedLocationAnimalService(
+        AppDbContext context, 
+        IGenericValidator<Animal> validator, 
+        IGenericValidator<LocationPoint> locationPointValidator,
+        IGenericValidator<AnimalVisitedLocation> visitedLocationValidator)
     {
         _context = context;
+        _animalValidator = validator;
+        _locationPointValidator = locationPointValidator;
+        _visitedLocationValidator = visitedLocationValidator;
     }
 
     public IQueryable<AnimalVisitedLocation> GetAnimalVisitedLocationsById(
         long animalId, 
-        LocationVisitedLocationOptions options)
+        LocationVisitedSortFilterOptions sortFilterOptions)
     {
         CheckAnimalIdWithThrowException(animalId);
         
@@ -27,18 +37,18 @@ public class VisitedLocationAnimalService
             .Include(a => a.VisitedLocations)
             .Where(a => a.AnimalId == animalId)
             .SelectMany(a => a.VisitedLocations)
-            .FilterLocationBy(options.VisitedLocationFilterBy, options.FilterValue)
+            .FilterLocationBy(sortFilterOptions.VisitedLocationFilterBy, sortFilterOptions.FilterValue)
             .OrderBy(vl => vl.DateTimeOfVisitLocationPoint);
         
-        options.SetupRest(query);
+        sortFilterOptions.SetupRest(query);
         
-        return query.Page(options.PageNum-1, options.PageSize);
+        return query.Page(sortFilterOptions.PageNum-1, sortFilterOptions.PageSize);
     }
 
-    public AnimalVisitedLocation AddVisitedLocationToAnimal(long animalId, long visitedLocationId)
+    public AnimalVisitedLocation AddVisitedLocationToAnimal(long animalId, long locationId)
     {
         CheckAnimalIdWithThrowException(animalId);
-        CheckLocationPointWithThrowException(visitedLocationId);
+        CheckLocationPointWithThrowException(locationId);
         
         var animal = _context.Animals
             .Include(a => a.ChippingLocationPoint)
@@ -49,7 +59,7 @@ public class VisitedLocationAnimalService
             throw new InvalidOperationException("Animal is dead");
         
         var point = _context.Locations
-            .Single(p => p.LocationPointId == visitedLocationId);
+            .Single(p => p.LocationPointId == locationId);
         if (point.LocationPointId == animal.ChippingLocationPoint.LocationPointId)
             throw new InvalidOperationException("Location point is already added");
         if (point.LocationPointId == animal.VisitedLocations.Last().LocationPoint.LocationPointId)
@@ -69,7 +79,7 @@ public class VisitedLocationAnimalService
     public AnimalVisitedLocation UpdateVisitedLocationToAnimal(long animalId, UpdateVisitedLocationDto dto)
     {
         CheckAnimalIdWithThrowException(animalId);
-        CheckAnimalIdWithThrowException(dto.VisitedLocationId);
+        CheckVisitedLocationPointWithThrowException(dto.VisitedLocationId);
         CheckLocationPointWithThrowException(dto.LocationPointId);
         
         var animal = _context.Animals
@@ -120,29 +130,21 @@ public class VisitedLocationAnimalService
 
     private void CheckAnimalIdWithThrowException(long animalId)
     {
-        var animal = _context.Animals
-            .AsNoTracking()
-            .SingleOrDefault(a => a.AnimalId == animalId);
-        if (animal == null)
-            throw new EntityByIdNotFoundException($"Animal with id {animalId} does not exist");
+        _animalValidator.CheckWithThrowExceptions(new Animal {AnimalId = animalId}, $"Animal {animalId} not found.");
     }
 
     private void CheckVisitedLocationPointWithThrowException(long visitedLocationPointId)
     {
-        var visitedLocation = _context.AnimalVisitedLocations
-            .AsNoTracking()
-            .Single(vl => vl.AVLocationId == visitedLocationPointId);
-        if (visitedLocation == null)
-            throw new EntityByIdNotFoundException($"Visited location point with id {visitedLocationPointId} does not exist");
+        _visitedLocationValidator.CheckWithThrowExceptions(
+            new AnimalVisitedLocation() {AVLocationId = visitedLocationPointId},
+            $"Visited location point with id {visitedLocationPointId} does not exist");
     }
 
-    private void CheckLocationPointWithThrowException(long locationPointId)
+    private void CheckLocationPointWithThrowException(long locationId)
     {
-        var locationPoint = _context.Locations
-            .AsNoTracking()
-            .Single(l => l.LocationPointId == locationPointId);
-        if (locationPoint == null)
-            throw new EntityByIdNotFoundException($"Location point with id {locationPointId} does not exist");
+        _locationPointValidator.CheckWithThrowExceptions(
+            new LocationPoint {LocationPointId = locationId, Latitude = 0, Longitude = 0},
+            $"Location {locationId} not found.");
     }
     
 }
