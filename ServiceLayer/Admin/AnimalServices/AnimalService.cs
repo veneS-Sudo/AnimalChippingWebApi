@@ -139,12 +139,7 @@ public class AnimalService
     private void CheckLocationPointIdWithThrowException(long locationPointId)
     {
         _locationPointValidator.CheckWithThrowExceptions(
-            new LocationPoint
-            {
-                LocationPointId = locationPointId,
-                Latitude = 0,
-                Longitude = 0
-            }, $"Location {locationPointId} not found.");
+            new LocationPoint { LocationPointId = locationPointId }, $"Location {locationPointId} not found.");
     }
 
     private void CheckAccountWithThrowException(int accountId)

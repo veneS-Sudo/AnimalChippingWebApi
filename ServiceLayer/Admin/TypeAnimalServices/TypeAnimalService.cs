@@ -46,8 +46,8 @@ public class TypeAnimalService
     public bool SoftDeleteAnimalType(long id)
     {
         var animalType = _context.AnimalTypes.Single(at => at.AnimalTypeId == id);
-        animalType.SoftDeleted = true;
-        _context.SaveChanges();
-        return animalType.SoftDeleted;
+        _context.AnimalTypes.Remove(animalType);
+        var result = _context.SaveChanges();
+        return result > 0;
     }
 }

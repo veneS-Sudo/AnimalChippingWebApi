@@ -22,14 +22,10 @@ public class LocationService
     {
         var resultSearch = _context.Locations
             .SingleOrDefault(point => point.LocationPointId == locationPoint.LocationPointId);
-        if (resultSearch != null)
-        {
-            if (!resultSearch.SoftDeleted)
-                throw new Exception($"Location point with id {locationPoint.LocationPointId} already exists");
-            resultSearch.SoftDeleted = false;
-        }
-        else
+        if (resultSearch is null)
             _context.Locations.Add(locationPoint);
+        else
+            throw new Exception($"Duplicate location point: {locationPoint.LocationPointId}");
         
         _context.SaveChanges();
         return true;
@@ -47,8 +43,8 @@ public class LocationService
     public bool SoftDeletedLocationPoint(long id)
     {
         var point = _context.Locations.Single(point => point.LocationPointId == id);
-        point.SoftDeleted = true;
-        _context.SaveChanges();
-        return point.SoftDeleted;
+        _context.Locations.Remove(point);
+        var  result = _context.SaveChanges();
+        return result > 0;
     }
 }

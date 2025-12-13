@@ -14,4 +14,10 @@ public class AppDbContext : DbContext
     public DbSet<Animal> Animals { get; set; }
     public DbSet<AnimalType> AnimalTypes { get; set; }
     public DbSet<AnimalVisitedLocation> AnimalVisitedLocations { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Animal>().HasQueryFilter(animal => !animal.SoftDeleted);
+        base.OnModelCreating(modelBuilder);
+    }
 }

@@ -3,6 +3,7 @@ namespace AnimalChippingWebApi.Core.Models;
 public class AnimalType
 {
     public long AnimalTypeId { get; set; }
-    public required string Type { get; set; }
-    public bool SoftDeleted { get; set; }
+    public string Type { get; set; }
+    
+    public ICollection<Animal> Animals { get; set; }
 }

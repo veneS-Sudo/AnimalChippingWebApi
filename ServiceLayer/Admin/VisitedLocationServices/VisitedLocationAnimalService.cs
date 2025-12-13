@@ -143,7 +143,7 @@ public class VisitedLocationAnimalService
     private void CheckLocationPointWithThrowException(long locationId)
     {
         _locationPointValidator.CheckWithThrowExceptions(
-            new LocationPoint {LocationPointId = locationId, Latitude = 0, Longitude = 0},
+            new LocationPoint {LocationPointId = locationId},
             $"Location {locationId} not found.");
     }
     
