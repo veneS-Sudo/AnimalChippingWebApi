@@ -1,5 +1,6 @@
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
 
@@ -8,21 +9,30 @@ namespace ServiceLayer.Admin.TypeAnimalServices;
 public class TypeAnimalService
 {
     private readonly AppDbContext _context;
+    private readonly IGenericValidator<AnimalType> _animalTypeValidator;
 
-    public TypeAnimalService(AppDbContext context)
+    public TypeAnimalService(
+        AppDbContext context,
+        IGenericValidator<AnimalType> animalTypeValidator)
     {
         _context = context;
+        _animalTypeValidator = animalTypeValidator;
     }
 
     public AnimalType GetAnimalTypeById(long id)
     {
-        var animalType = _context.AnimalTypes.AsNoTracking()
+        CheckAnimalTypeExists(id);
+        
+        var animalType = _context.AnimalTypes
+            .AsNoTracking()
             .Single(at => at.AnimalTypeId == id);
         return animalType;
     }
 
     public bool AddAnimalType(AddAnimalTypeDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Type))
+            throw new Exception($"Type {dto.Type} is required");
         if (_context.AnimalTypes.Any(at => at.Type.Equals(dto.Type, StringComparison.CurrentCultureIgnoreCase)))
             throw new Exception($"Type with name {dto.Type} already exists");
         
@@ -31,23 +41,41 @@ public class TypeAnimalService
             Type = dto.Type,
         };
         _context.AnimalTypes.Add(newAnimalType);
-        _context.SaveChanges();
-        return true;
+        var result = _context.SaveChanges();
+        return result > 0;
     }
 
     public bool UpdateAnimalType(AnimalType animalType)
     {
-        var oldAnimalType = _context.AnimalTypes.Single(at => at.AnimalTypeId == animalType.AnimalTypeId);
+        CheckAnimalTypeExists(animalType.AnimalTypeId);
+        if (string.IsNullOrWhiteSpace(animalType.Type))
+            throw new Exception($"Type {animalType.Type} is required");
+        
+        var oldAnimalType = _context.AnimalTypes
+            .Single(at => at.AnimalTypeId == animalType.AnimalTypeId);
         oldAnimalType.Type = animalType.Type;
-        _context.SaveChanges();
-        return true;
+        var result = _context.SaveChanges();
+        return result > 0;
     }
 
-    public bool SoftDeleteAnimalType(long id)
+    public bool DeleteAnimalType(long id)
     {
+        CheckAnimalTypeExists(id);
+        if (_context.AnimalTypes
+            .AsNoTracking()
+            .Include(t => t.Animals)
+            .Any(t => t.Animals.Count > 0))
+            throw new Exception($"There are animals with a type with {id}");
+        
         var animalType = _context.AnimalTypes.Single(at => at.AnimalTypeId == id);
         _context.AnimalTypes.Remove(animalType);
         var result = _context.SaveChanges();
         return result > 0;
+    }
+
+    private void CheckAnimalTypeExists(long id)
+    {
+        _animalTypeValidator.CheckWithThrowExceptions(new AnimalType() { AnimalTypeId = id },
+            "Animal type not found");
     }
 }
