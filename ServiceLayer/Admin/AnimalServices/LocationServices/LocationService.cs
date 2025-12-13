@@ -1,50 +1,85 @@
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Validators;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServiceLayer.Admin.LocationServices;
 
 public class LocationService
 {
     private readonly AppDbContext _context;
+    private readonly IGenericValidator<LocationPoint> _locationPointValidator;
 
-    public LocationService(AppDbContext context)
+    public LocationService(
+        AppDbContext context,
+        IGenericValidator<LocationPoint> locationPointValidator)
     {
         _context = context;
+        _locationPointValidator = locationPointValidator;
     }
 
     public LocationPoint GetLocationPointById(long id)
     {
-       var point = _context.Locations.Single(point => point.LocationPointId == id);
+        CheckLocationPointIdWithThrowException(id);
+        
+       var point = _context.Locations
+           .AsNoTracking()
+           .Single(point => point.LocationPointId == id);
        return point;
     }
 
     public bool AddLocationPoint(LocationPoint locationPoint)
     {
-        var resultSearch = _context.Locations
-            .SingleOrDefault(point => point.LocationPointId == locationPoint.LocationPointId);
-        if (resultSearch is null)
-            _context.Locations.Add(locationPoint);
-        else
-            throw new Exception($"Duplicate location point: {locationPoint.LocationPointId}");
-        
+        if (_context.Locations
+            .AsNoTracking()
+            .Any(l => 
+                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
+                      && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(l.Longitude, 4)) < 0.001))
+            throw new Exception($"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
+        _context.Locations.Add(locationPoint);
         _context.SaveChanges();
         return true;
     }
 
     public bool UpdateLocationPoint(LocationPoint locationPoint)
     {
-        var point = _context.Locations.Single(point => point.LocationPointId == locationPoint.LocationPointId);
+        CheckLocationPointIdWithThrowException(locationPoint.LocationPointId);
+        if (_context.Locations
+            .AsNoTracking()
+            .Any(l => 
+                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
+                      && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(l.Longitude, 4)) < 0.001))
+            throw new Exception($"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
+        
+        var point = _context.Locations
+            .Single(point => point.LocationPointId == locationPoint.LocationPointId);
         point.Latitude = locationPoint.Latitude;
         point.Longitude = locationPoint.Longitude;
         _context.SaveChanges();
         return true;
     }
 
-    public bool SoftDeletedLocationPoint(long id)
+    public bool DeletedLocationPoint(long id)
     {
-        var point = _context.Locations.Single(point => point.LocationPointId == id);
+        CheckLocationPointIdWithThrowException(id);
+        
+        var point = _context.Locations
+            .Include(l => l.Animals)
+            .Include(l => l.AnimalVisitedLocations)
+            .Single(point => point.LocationPointId == id);
+        if (point.Animals.Count != 0)
+            throw new Exception($"The location point {id} associated with animals");
+        if (point.AnimalVisitedLocations.Count != 0)
+            throw new Exception($"The location point {id} associated with visited locations");
+                
         _context.Locations.Remove(point);
         var  result = _context.SaveChanges();
         return result > 0;
+    }
+
+    private void CheckLocationPointIdWithThrowException(long id)
+    {
+        _locationPointValidator.CheckWithThrowExceptions(new LocationPoint() { LocationPointId = id },
+            $"Location point with id {id} not found");
     }
 }
