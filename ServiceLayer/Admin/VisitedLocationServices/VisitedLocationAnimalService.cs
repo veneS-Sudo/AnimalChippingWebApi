@@ -89,7 +89,7 @@ public class VisitedLocationAnimalService
             .Single(a => a.AnimalId == animalId);
         
         var point = animal.VisitedLocations
-            .Single(vl => vl.AVLocationId == dto.VisitedLocationId);
+            .Single(vl => vl.AnimalVisitedLocationId == dto.VisitedLocationId);
         
         if (point.LocationPoint.LocationPointId == dto.LocationPointId)
             throw new InvalidOperationException($"Location point {dto.LocationPointId} already exists");
@@ -119,9 +119,9 @@ public class VisitedLocationAnimalService
             .Single(a => a.AnimalId == animalId);
 
         var deleted = false;
-        if (animal.VisitedLocations.Any(vl => vl.AVLocationId == visitedLocationId))
+        if (animal.VisitedLocations.Any(vl => vl.AnimalVisitedLocationId == visitedLocationId))
             deleted = animal.VisitedLocations.Remove(
-                animal.VisitedLocations.Single(x => x.AVLocationId == visitedLocationId));
+                animal.VisitedLocations.Single(x => x.AnimalVisitedLocationId == visitedLocationId));
         else
             throw new Exception($"Animal dont have visited location {visitedLocationId} does not exist");
 
@@ -136,7 +136,7 @@ public class VisitedLocationAnimalService
     private void CheckVisitedLocationPointWithThrowException(long visitedLocationPointId)
     {
         _visitedLocationValidator.CheckWithThrowExceptions(
-            new AnimalVisitedLocation() {AVLocationId = visitedLocationPointId},
+            new AnimalVisitedLocation() {AnimalVisitedLocationId = visitedLocationPointId},
             $"Visited location point with id {visitedLocationPointId} does not exist");
     }
 
