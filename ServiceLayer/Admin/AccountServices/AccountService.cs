@@ -7,7 +7,7 @@ using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin.AccountServices;
 
-public class AccountService
+public class AccountService : IAccountService
 {
    private readonly AppDbContext _context;
    private readonly IGenericValidator<Account> _accountValidator;

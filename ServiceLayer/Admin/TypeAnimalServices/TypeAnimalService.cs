@@ -6,7 +6,7 @@ using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin.TypeAnimalServices;
 
-public class TypeAnimalService
+public class TypeAnimalService : ITypeAnimalService
 {
     private readonly AppDbContext _context;
     private readonly IGenericValidator<AnimalType> _animalTypeValidator;

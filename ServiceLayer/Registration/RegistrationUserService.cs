@@ -3,7 +3,7 @@ using AnimalChippingWebApi.DataBaseLayer.Context;
 
 namespace ServiceLayer.Registration;
 
-public class RegistrationUserService
+public class RegistrationUserService : IRegistrationUserService
 {
     private readonly AppDbContext _context;
 

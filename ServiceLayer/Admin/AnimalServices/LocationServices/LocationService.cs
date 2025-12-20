@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ServiceLayer.Admin.LocationServices;
 
-public class LocationService
+public class LocationService : ILocationService
 {
     private readonly AppDbContext _context;
     private readonly IGenericValidator<LocationPoint> _locationPointValidator;

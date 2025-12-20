@@ -3,12 +3,11 @@ using AnimalChippingWebApi.DataBaseLayer.Context;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic.CompilerServices;
 using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin;
 
-public class AnimalService
+public class AnimalService : IAnimalService
 {
     private readonly AppDbContext _context;
     private readonly IGenericValidator<Animal> _animalValidator;
@@ -26,7 +25,7 @@ public class AnimalService
         _accountValidator = accountValidator;
     }
 
-    public Animal GetAnimal(int animalId)
+    public Animal GetAnimalById(long animalId)
     { CheckAnimalIdWithThrowException(animalId);
         
         var animal = _context.Animals
@@ -35,7 +34,7 @@ public class AnimalService
         return animal;
     }
 
-    public IQueryable<Animal> GetAnimalsWithoutTracking(AnimalSortFilterPageOptions filterOptions)
+    public IQueryable<Animal> GetAnimals(AnimalSortFilterPageOptions filterOptions)
     {
         var query = _context.Animals
             .AsNoTracking()
@@ -77,7 +76,7 @@ public class AnimalService
         return true;
     }
     
-    public bool UpdateDataAnimals(long animalId, UpdateDataAnimalDto dto)
+    public bool UpdateDataAnimal(long animalId, UpdateDataAnimalDto dto)
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckLocationPointIdWithThrowException(dto.ChippingLocationPointId);

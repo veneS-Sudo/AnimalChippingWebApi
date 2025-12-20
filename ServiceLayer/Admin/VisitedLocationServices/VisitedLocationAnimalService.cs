@@ -7,7 +7,7 @@ using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin;
 
-public class VisitedLocationAnimalService
+public class VisitedLocationAnimalService : IVisitedLocationAnimalService
 {
     private readonly AppDbContext _context;
     private readonly IGenericValidator<Animal> _animalValidator;
