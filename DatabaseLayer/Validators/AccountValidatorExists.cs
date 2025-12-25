@@ -25,6 +25,6 @@ public class AccountValidatorExists : IGenericValidator<Account>
     public void CheckWithThrowExceptions(Account input, string message)
     {
         if(!Check(input))
-            throw new ValidationException(message);
+            throw new ValidationExistsException(message);
     }
 }

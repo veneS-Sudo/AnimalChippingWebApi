@@ -1,3 +1,4 @@
+using System.Globalization;
 using AnimalChippingWebApi.Core.Models;
 
 namespace ServiceLayer.Admin;
@@ -16,7 +17,8 @@ public static class VisitedLocationExtension
             case VisitedLocationFilterBy.NoFilter:
                 return source;
             case VisitedLocationFilterBy.ByDate:
-                var values = filterValue.Split(',').Select(x => DateTime.Parse(x));     // Разбиение фильтра по дате
+                var values = filterValue.Split(',')
+                    .Select(x => DateTime.ParseExact(x, "yyy-MM-dd", CultureInfo.InvariantCulture)).ToList();     // Разбиение фильтра по дате
                 var leftBound = values.Min();
                 var rightBound = values.Max();
                 return source.Where(l => l.DateTimeOfVisitLocationPoint >= leftBound 

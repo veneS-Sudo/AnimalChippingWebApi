@@ -24,6 +24,6 @@ public class LocationPointValidatorExists : IGenericValidator<LocationPoint>
     public void CheckWithThrowExceptions(LocationPoint input, string message)
     {
         if (!Check(input))
-            throw new ValidationCheckException(message);
+            throw new ValidationExistsException(message);
     }
 }

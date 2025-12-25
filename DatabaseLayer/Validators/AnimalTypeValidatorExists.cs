@@ -25,6 +25,6 @@ public class AnimalTypeValidatorExists : IGenericValidator<AnimalType>
     public void CheckWithThrowExceptions(AnimalType input, string message)
     {
         if (!Check(input))
-            throw new ValidationException(message);
+            throw new ValidationExistsException(message);
     }
 }

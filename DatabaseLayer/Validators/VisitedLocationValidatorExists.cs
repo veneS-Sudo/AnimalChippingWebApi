@@ -24,6 +24,6 @@ public class VisitedLocationValidatorExists : IGenericValidator<AnimalVisitedLoc
     public void CheckWithThrowExceptions(AnimalVisitedLocation input, string message)
     {
         if (!Check(input))
-            throw new ValidationCheckException(message);
+            throw new ValidationExistsException(message);
     }
 }

@@ -25,6 +25,6 @@ public class AnimalValidatorExists : IGenericValidator<Animal>
     {
         var resultValidation = Check(input);
         if (!resultValidation)
-            throw new ValidationCheckException(message);
+            throw new ValidationExistsException(message);
     }
 }
