@@ -1,27 +1,57 @@
 using System.Globalization;
+using AnimalChippingWebApi.Authentication;
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
 using AnimalChippingWebApi.Middlewares;
 using AnimalChippingWebApi.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Net.Http.Headers;
+using Microsoft.OpenApi.Models;
 using ServiceLayer;
 using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
 using ServiceLayer.Admin.Generic;
 using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
+using ServiceLayer.Registration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "Animal Chipping API", Version = "v1" });
+    var security = new OpenApiSecurityScheme
+    {
+        Name = HeaderNames.Authorization,
+        Type = SecuritySchemeType.ApiKey,
+        In = ParameterLocation.Header,
+        Description = "Basic Authorization header using the Basic scheme.",
+        Reference = new OpenApiReference
+        {
+            Id = UserAuthenticationHandler.AuthenticationSchemeName,
+            Type = ReferenceType.SecurityScheme
+        }
+    };
+    options.AddSecurityDefinition(security.Reference.Id, security);
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement {{security, Array.Empty<string>()}});
+});
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddProblemDetails();
 builder.Services.AddCoreServices();
 
+builder.Services.AddAuthentication("Basic")
+    .AddScheme<AuthenticationSchemeOptions, UserAuthenticationHandler>("Basic", null);
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
+
+app.UseRouting();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler();
@@ -33,7 +63,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseMiddleware<ExceptionExistsHandlerMiddleware>();
+app.UseMiddleware<ExceptionUniqueEmailHandlerMiddleware>();
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // ===========================================
 // Account endpoints
@@ -66,6 +100,17 @@ app.MapGet("/accounts/search", ([AsParameters] AccountSearchDto accountSearchDto
         .Skip((accountSearchDto.From % accountSearchDto.Size) ?? 0).ToList();
     return TypedResults.Ok(result);
 });
+app.MapPost("/registration",
+    ([FromBody] UserRegistrationDto dto, HttpContext context,
+        [FromServices] IRegistrationUserService registrationService) => 
+    {
+        if (!context.User.Identity?.IsAuthenticated ?? false)
+        {
+            return Results.Problem("You are already logged in", statusCode: 403);
+        }
+        var accountId = registrationService.RegistrationUser(dto);
+        return TypedResults.Created($"/accounts/{accountId}");
+    }).WithParameterValidation();
 
 
 // ===========================================

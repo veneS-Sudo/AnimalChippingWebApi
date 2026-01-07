@@ -1,5 +1,6 @@
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using ServiceLayer.Registration.Exceptions;
 
 namespace ServiceLayer.Registration;
 
@@ -15,7 +16,7 @@ public class RegistrationUserService : IRegistrationUserService
     public int RegistrationUser(UserRegistrationDto dto)
     {
         if (_context.Accounts.Any(x => x.Email == dto.Email))
-            throw new Exception($"Account with email {dto.Email} already exists");
+            throw new UniqueEmailException($"Account with email {dto.Email} already exists");
         var account = new Account
         {
             FirstName = dto.FirstName,

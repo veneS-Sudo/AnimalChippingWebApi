@@ -5,6 +5,7 @@ using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
 using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
+using ServiceLayer.Authentication;
 using ServiceLayer.Registration;
 
 namespace ServiceLayer;
@@ -38,6 +39,9 @@ public static class Bootstraps
         
         // Add registration user service
         services.AddScoped<IRegistrationUserService, RegistrationUserService>();
+        
+        // Add authenticationService
+        services.AddScoped<IUserAuthenticationService, UserAuthenticationService>();
         return services;
     }
 }
