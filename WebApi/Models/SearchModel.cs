@@ -8,10 +8,6 @@ public abstract class SearchModel
     private int _from;
     private int _size;
     
-    [FromQuery(Name = "email")]
-    [EmailAddress]
-    public string? Email { get; set; }
-
     [FromQuery(Name = "from")]
     public int? From
     {

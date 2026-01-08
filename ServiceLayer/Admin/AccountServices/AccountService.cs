@@ -4,6 +4,7 @@ using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
+using ServiceLayer.Registration.Exceptions;
 
 namespace ServiceLayer.Admin.AccountServices;
 
@@ -20,17 +21,17 @@ public class AccountService : IAccountService
       _accountValidator = accountValidator;
    }
 
-   public Account GetAccountById(int accountId)
+   public AccountDto GetAccountById(int accountId)
    {
       CheckIfAccountExists(accountId);
       
       var account = _context.Accounts
          .AsNoTracking()
          .Single(a => a.AccountId == accountId);
-      return account;
+      return account.ToDto();
    }
 
-   public IQueryable<Account> GetAccounts(AccountSortFilterPageOptions filterOptions)
+   public IQueryable<AccountDto> GetAccounts(AccountSortFilterPageOptions filterOptions)
    {
       var query = _context.Accounts
          .AsNoTracking()
@@ -39,7 +40,7 @@ public class AccountService : IAccountService
       
       filterOptions.SetupRest(query);
       
-      return query.Page(filterOptions.PageNum-1, filterOptions.PageSize);
+      return query.Page(filterOptions.PageNum-1, filterOptions.PageSize).Select(account => account.ToDto());
    }
 
    public bool UpdateAccountById(int accountId, UpdateAccountDto dto)
@@ -49,13 +50,12 @@ public class AccountService : IAccountService
           || string.IsNullOrWhiteSpace(dto.LastName)
           || string.IsNullOrWhiteSpace(dto.Email)
           || string.IsNullOrWhiteSpace(dto.Password))
-         throw new Exception("Invalid data");
+         throw new InvalidOperationException("Invalid input data");
       
       var account = _context.Accounts
-         .AsNoTracking()
          .Single(a => a.AccountId == accountId);
-      if (_context.Accounts.Any(a => a.Email == dto.Email))
-         throw new Exception($"Email {dto.Email} already exists");
+      if (_context.Accounts.Any(a => a.Email == dto.Email && a.AccountId != accountId))
+         throw new UniqueEmailException($"Email {dto.Email} already exists");
       
       account.FirstName = dto.FirstName;
       account.LastName = dto.LastName;
@@ -73,7 +73,7 @@ public class AccountService : IAccountService
          .Include(a => a.ChippedAnimals)
          .Single(a => a.AccountId == accountId);
       if (account.ChippedAnimals.Any())
-         throw new Exception($"Account {accountId} has chipped animals");
+         throw new InvalidOperationException($"Account {accountId} has chipped animals");
       
       _context.Accounts.Remove(account);
       var result = _context.SaveChanges();

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using AnimalChippingWebApi.Authentication;
 using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
@@ -13,6 +14,7 @@ using Microsoft.OpenApi.Models;
 using ServiceLayer;
 using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
+using ServiceLayer.Admin.Dto;
 using ServiceLayer.Admin.Generic;
 using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
@@ -64,6 +66,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseMiddleware<ExceptionExistsHandlerMiddleware>();
 app.UseMiddleware<ExceptionUniqueEmailHandlerMiddleware>();
+app.UseMiddleware<ExceptionInvalidDataHandlerMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
@@ -75,6 +78,8 @@ var groupWithValidationId = app.MapGroup("/")
 var groupWithValidationSearchParams = app.MapGroup("/")
     .AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchPaginationParamsFactory)
     .RequireAuthorization();
+
+
 // ===========================================
 // Account endpoints
 // ===========================================
@@ -101,18 +106,44 @@ groupWithValidationSearchParams.MapGet("/accounts/search", ([AsParameters] Accou
     var result = accountService.GetAccounts(searchOptions)
         .Skip((accountSearchDto.From % accountSearchDto.Size) ?? 0).ToList();
     return TypedResults.Ok(result);
-});
+}).WithParameterValidation();
 app.MapPost("/registration",
-    ([FromBody] UserRegistrationDto dto, HttpContext context,
+    ([FromBody] UserRegistrationDto dto, ClaimsPrincipal user,
         [FromServices] IRegistrationUserService registrationService) => 
     {
-        if (context.User.Identity?.IsAuthenticated ?? false)
+        if (user.Identity?.IsAuthenticated ?? false)
         {
             return Results.Problem("You are already logged in", statusCode: 403);
         }
         var accountId = registrationService.RegistrationUser(dto);
         return TypedResults.Created($"/accounts/{accountId}");
     }).WithParameterValidation();
+groupWithValidationId.MapPut("/accounts/{accountId:int}", (int accountId, 
+    [FromBody] UserUpdateDto dto, [FromServices] IAccountService accountService) =>
+{
+    var isUpdated = accountService.UpdateAccountById(accountId, new UpdateAccountDto()
+    {
+        Email = dto.Email,
+        FirstName = dto.FirstName,
+        LastName = dto.LastName,
+        Password = dto.Password,
+    });
+    if (isUpdated)
+    {
+        var account = accountService.GetAccountById(accountId);
+        return Results.Ok(account);
+    }
+    return Results.NoContent();
+}).WithParameterValidation()
+.AddEndpointFilter<OwnedAccountValidationFilter>();
+groupWithValidationId.MapDelete("/accounts/{accountId:int}", (int accountId, 
+    [FromServices] IAccountService accountService) =>
+{
+    var isDeleted = accountService.DeleteAccountById(accountId);
+    if (isDeleted)
+        return Results.Ok();
+    return Results.NoContent();
+}).AddEndpointFilter<OwnedAccountValidationFilter>();
 
 
 // ===========================================
