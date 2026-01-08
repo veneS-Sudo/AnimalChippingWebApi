@@ -16,7 +16,7 @@ public class RegistrationUserService : IRegistrationUserService
     public int RegistrationUser(UserRegistrationDto dto)
     {
         if (_context.Accounts.Any(x => x.Email == dto.Email))
-            throw new UniqueEmailException($"Account with email {dto.Email} already exists");
+            throw new UniqueValueException($"Account with email {dto.Email} already exists");
         var account = new Account
         {
             FirstName = dto.FirstName,

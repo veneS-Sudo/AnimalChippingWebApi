@@ -5,6 +5,7 @@ using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
 using AnimalChippingWebApi.Middlewares;
 using AnimalChippingWebApi.Models;
+using AnimalChippingWebApi.Models.Location;
 using AnimalChippingWebApi.ValidationFilters;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -14,9 +15,9 @@ using Microsoft.OpenApi.Models;
 using ServiceLayer;
 using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
+using ServiceLayer.Admin.AnimalServices.LocationServices;
 using ServiceLayer.Admin.Dto;
 using ServiceLayer.Admin.Generic;
-using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
 using ServiceLayer.Registration;
 
@@ -65,7 +66,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseMiddleware<ExceptionExistsHandlerMiddleware>();
-app.UseMiddleware<ExceptionUniqueEmailHandlerMiddleware>();
+app.UseMiddleware<ExceptionUniqueValueHandlerMiddleware>();
 app.UseMiddleware<ExceptionInvalidDataHandlerMiddleware>();
 app.UseHttpsRedirection();
 
@@ -109,14 +110,15 @@ groupWithValidationSearchParams.MapGet("/accounts/search", ([AsParameters] Accou
 }).WithParameterValidation();
 app.MapPost("/registration",
     ([FromBody] UserRegistrationDto dto, ClaimsPrincipal user,
-        [FromServices] IRegistrationUserService registrationService) => 
+        [FromServices] IRegistrationUserService registrationService, [FromServices] IAccountService accountService) => 
     {
         if (user.Identity?.IsAuthenticated ?? false)
         {
             return Results.Problem("You are already logged in", statusCode: 403);
         }
         var accountId = registrationService.RegistrationUser(dto);
-        return TypedResults.Created($"/accounts/{accountId}");
+        var account = accountService.GetAccountById(accountId);
+        return Results.Created($"/accounts/{accountId}", account);
     }).WithParameterValidation();
 groupWithValidationId.MapPut("/accounts/{accountId:int}", (int accountId, 
     [FromBody] UserUpdateDto dto, [FromServices] IAccountService accountService) =>
@@ -207,6 +209,37 @@ groupWithValidationId.MapGet("/locations/{pointId:long}", (long pointId,
     var location = locationService.GetLocationPointById(pointId);
     return Results.Ok(location);
 });
+app.MapPost("/locations", ([FromBody] LocationCreateUpdateDto dto, [FromServices] ILocationService locationService) =>
+{
+    var locationId = locationService.AddLocationPoint(new LocationPoint()
+        { Longitude = dto.Longitude, Latitude = dto.Latitude });
+    var location = locationService.GetLocationPointById(locationId);
+    return Results.Created($"/locations/{locationId}", location);
+}).RequireAuthorization().WithParameterValidation();
+groupWithValidationId.MapPut("/location/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
+    [FromServices] ILocationService locationService) =>
+{
+    var isUpdated = locationService.UpdateLocationPoint(new LocationPoint()
+        { LocationPointId = pointId, Longitude = dto.Longitude, Latitude = dto.Latitude });
+    if (isUpdated)
+    {
+        var location = locationService.GetLocationPointById(pointId);
+        return Results.Ok(location);
+    }
+    return Results.NoContent();
+}).WithParameterValidation();
+groupWithValidationId.MapDelete("/locations/{pointId:long}",
+    (long pointId, [FromServices] ILocationService locationService) =>
+    {
+        var isDeleted = locationService.DeletedLocationPoint(pointId);
+        if (isDeleted)
+        {
+            return Results.Ok();
+        }
+
+        return Results.NoContent();
+    });
+
 
 // ===========================================
 // visited locations endpoints

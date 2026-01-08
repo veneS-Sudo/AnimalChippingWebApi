@@ -2,8 +2,9 @@ using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using ServiceLayer.Registration.Exceptions;
 
-namespace ServiceLayer.Admin.LocationServices;
+namespace ServiceLayer.Admin.AnimalServices.LocationServices;
 
 public class LocationService : ILocationService
 {
@@ -18,27 +19,28 @@ public class LocationService : ILocationService
         _locationPointValidator = locationPointValidator;
     }
 
-    public LocationPoint GetLocationPointById(long id)
+    public LocationPointDto GetLocationPointById(long id)
     {
         CheckLocationPointIdWithThrowException(id);
         
        var point = _context.Locations
            .AsNoTracking()
            .Single(point => point.LocationPointId == id);
-       return point;
+       return point.ToDto();
     }
 
-    public bool AddLocationPoint(LocationPoint locationPoint)
+    public long AddLocationPoint(LocationPoint locationPoint)
     {
         if (_context.Locations
             .AsNoTracking()
-            .Any(l => 
+            .Any(l =>
                 Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
-                      && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(l.Longitude, 4)) < 0.001))
-            throw new Exception($"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
+                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.001))
+            throw new UniqueValueException(
+                $"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
         _context.Locations.Add(locationPoint);
         _context.SaveChanges();
-        return true;
+        return locationPoint.LocationPointId;
     }
 
     public bool UpdateLocationPoint(LocationPoint locationPoint)
@@ -46,17 +48,18 @@ public class LocationService : ILocationService
         CheckLocationPointIdWithThrowException(locationPoint.LocationPointId);
         if (_context.Locations
             .AsNoTracking()
-            .Any(l => 
+            .Any(l =>
                 Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
-                      && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(l.Longitude, 4)) < 0.001))
-            throw new Exception($"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
+                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.001))
+            throw new UniqueValueException(
+                $"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
         
         var point = _context.Locations
             .Single(point => point.LocationPointId == locationPoint.LocationPointId);
         point.Latitude = locationPoint.Latitude;
         point.Longitude = locationPoint.Longitude;
-        _context.SaveChanges();
-        return true;
+        var result = _context.SaveChanges();
+        return result > 0;
     }
 
     public bool DeletedLocationPoint(long id)
@@ -68,9 +71,9 @@ public class LocationService : ILocationService
             .Include(l => l.AnimalVisitedLocations)
             .Single(point => point.LocationPointId == id);
         if (point.Animals.Count != 0)
-            throw new Exception($"The location point {id} associated with animals");
+            throw new InvalidOperationException($"The location point {id} associated with animals");
         if (point.AnimalVisitedLocations.Count != 0)
-            throw new Exception($"The location point {id} associated with visited locations");
+            throw new InvalidOperationException($"The location point {id} associated with visited locations");
                 
         _context.Locations.Remove(point);
         var  result = _context.SaveChanges();

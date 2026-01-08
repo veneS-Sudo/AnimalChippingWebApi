@@ -3,7 +3,7 @@ using DatabaseLayer.Validators;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
-using ServiceLayer.Admin.LocationServices;
+using ServiceLayer.Admin.AnimalServices.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
 using ServiceLayer.Authentication;
 using ServiceLayer.Registration;

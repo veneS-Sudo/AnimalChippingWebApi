@@ -2,11 +2,11 @@ using ServiceLayer.Registration.Exceptions;
 
 namespace AnimalChippingWebApi.Middlewares;
 
-public class ExceptionUniqueEmailHandlerMiddleware
+public class ExceptionUniqueValueHandlerMiddleware
 {
     private readonly RequestDelegate _next;
 
-    public ExceptionUniqueEmailHandlerMiddleware(RequestDelegate next)
+    public ExceptionUniqueValueHandlerMiddleware(RequestDelegate next)
     {
         _next = next;
     }
@@ -17,7 +17,7 @@ public class ExceptionUniqueEmailHandlerMiddleware
         {
             await _next(context);
         }
-        catch (UniqueEmailException e)
+        catch (UniqueValueException e)
         {
             await Results.Problem(e.Message, statusCode: 409).ExecuteAsync(context);
         }

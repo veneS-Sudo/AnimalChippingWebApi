@@ -55,7 +55,7 @@ public class AccountService : IAccountService
       var account = _context.Accounts
          .Single(a => a.AccountId == accountId);
       if (_context.Accounts.Any(a => a.Email == dto.Email && a.AccountId != accountId))
-         throw new UniqueEmailException($"Email {dto.Email} already exists");
+         throw new UniqueValueException($"Email {dto.Email} already exists");
       
       account.FirstName = dto.FirstName;
       account.LastName = dto.LastName;
