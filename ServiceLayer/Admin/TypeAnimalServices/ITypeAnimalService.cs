@@ -5,8 +5,8 @@ namespace ServiceLayer.Admin.TypeAnimalServices;
 
 public interface ITypeAnimalService
 {
-   AnimalType GetAnimalTypeById(long id);
-   bool AddAnimalType(AddAnimalTypeDto dto);
+   AnimalTypeDto GetAnimalTypeById(long id);
+   long AddAnimalType(CreateUpdateAnimalTypeDto dto);
    bool UpdateAnimalType(AnimalType animalType);
    bool DeleteAnimalType(long id);
 }

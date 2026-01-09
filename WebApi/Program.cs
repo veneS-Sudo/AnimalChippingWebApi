@@ -199,6 +199,35 @@ groupWithValidationId.MapGet("/animals/types/{typeId:long}", (long typeId,
     var typeAnimal = typeAnimalService.GetAnimalTypeById(typeId);
     return Results.Ok(typeAnimal);
 });
+app.MapPost("/animals/types",
+    ([FromBody] CreateUpdateAnimalTypeDto dto, [FromServices] ITypeAnimalService typeAnimalService) =>
+    {
+        var typeId = typeAnimalService.AddAnimalType(dto);
+        var animalType = typeAnimalService.GetAnimalTypeById(typeId);
+        return Results.Created($"/animals/types/{typeId}", animalType);
+    }).RequireAuthorization().WithParameterValidation();
+groupWithValidationId.MapPut("/animals/types/{typeId:long}", (long typeId, [FromBody] CreateUpdateAnimalTypeDto dto,
+    [FromServices] ITypeAnimalService typeAnimalService) =>
+{
+    var isUpdated = typeAnimalService.UpdateAnimalType(new AnimalType { AnimalTypeId = typeId, Type = dto.Type });
+    if (isUpdated)
+    {
+        var animalType = typeAnimalService.GetAnimalTypeById(typeId);
+        return Results.Ok(animalType);
+    }
+    return Results.NoContent();
+}).WithParameterValidation();
+groupWithValidationId.MapDelete("/animals/types/{typeId:long}",
+    (long typeId, [FromServices] ITypeAnimalService typeAnimalService) =>
+    {
+        var isDeleted = typeAnimalService.DeleteAnimalType(typeId);
+        if (isDeleted)
+        {
+            return Results.Ok();
+        }
+
+        return Results.NoContent();
+    });
 
 // ===========================================
 // location endpoints

@@ -3,6 +3,7 @@ using AnimalChippingWebApi.DataBaseLayer.Context;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
+using ServiceLayer.Registration.Exceptions;
 
 namespace ServiceLayer.Admin.TypeAnimalServices;
 
@@ -19,37 +20,40 @@ public class TypeAnimalService : ITypeAnimalService
         _animalTypeValidator = animalTypeValidator;
     }
 
-    public AnimalType GetAnimalTypeById(long id)
+    public AnimalTypeDto GetAnimalTypeById(long id)
     {
         CheckAnimalTypeExists(id);
         
         var animalType = _context.AnimalTypes
             .AsNoTracking()
             .Single(at => at.AnimalTypeId == id);
-        return animalType;
+        return animalType.ToDto();
     }
 
-    public bool AddAnimalType(AddAnimalTypeDto dto)
+    public long AddAnimalType(CreateUpdateAnimalTypeDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Type))
-            throw new Exception($"Type {dto.Type} is required");
-        if (_context.AnimalTypes.Any(at => at.Type.Equals(dto.Type, StringComparison.CurrentCultureIgnoreCase)))
-            throw new Exception($"Type with name {dto.Type} already exists");
+            throw new InvalidOperationException($"Type {dto.Type} is required");
+        if (_context.AnimalTypes.Any(at => EF.Functions.Like(dto.Type, at.Type)))
+            throw new UniqueValueException($"Type with name {dto.Type} already exists");
         
         var newAnimalType = new AnimalType
         {
             Type = dto.Type,
         };
         _context.AnimalTypes.Add(newAnimalType);
-        var result = _context.SaveChanges();
-        return result > 0;
+        _context.SaveChanges();
+        return newAnimalType.AnimalTypeId;
     }
 
     public bool UpdateAnimalType(AnimalType animalType)
     {
         CheckAnimalTypeExists(animalType.AnimalTypeId);
         if (string.IsNullOrWhiteSpace(animalType.Type))
-            throw new Exception($"Type {animalType.Type} is required");
+            throw new InvalidOperationException($"Type {animalType.Type} is required");
+        if (_context.AnimalTypes.Any(at => at.AnimalTypeId != animalType.AnimalTypeId &&
+                                           EF.Functions.Like(animalType.Type, at.Type)))
+            throw new UniqueValueException($"Type with name {animalType.Type} already exists");
         
         var oldAnimalType = _context.AnimalTypes
             .Single(at => at.AnimalTypeId == animalType.AnimalTypeId);
@@ -64,8 +68,9 @@ public class TypeAnimalService : ITypeAnimalService
         if (_context.AnimalTypes
             .AsNoTracking()
             .Include(t => t.Animals)
-            .Any(t => t.Animals.Count > 0))
-            throw new Exception($"There are animals with a type with {id}");
+            .Single(at => at.AnimalTypeId == id)
+            .Animals.Any())
+            throw new InvalidOperationException($"There are animals with a type with {id}");
         
         var animalType = _context.AnimalTypes.Single(at => at.AnimalTypeId == id);
         _context.AnimalTypes.Remove(animalType);
