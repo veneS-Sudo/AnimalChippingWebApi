@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace AnimalChippingWebApi.Models;
+namespace AnimalChippingWebApi.Models.Animal;
 
 public class AnimalSearchDto : SearchDateModel
 {

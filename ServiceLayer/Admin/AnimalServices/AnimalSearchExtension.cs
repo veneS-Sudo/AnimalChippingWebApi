@@ -1,4 +1,4 @@
-using AnimalChippingWebApi.Core.Models;
+using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace ServiceLayer.Admin;

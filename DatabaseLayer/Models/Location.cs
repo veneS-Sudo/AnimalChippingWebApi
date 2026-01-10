@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace AnimalChippingWebApi.Core.Models;
+namespace DatabaseLayer.Models;
 
 public record LocationPoint
 {

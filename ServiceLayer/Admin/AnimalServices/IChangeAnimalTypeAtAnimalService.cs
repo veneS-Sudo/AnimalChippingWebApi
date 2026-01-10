@@ -1,11 +1,11 @@
-using AnimalChippingWebApi.Core.Models;
+using DatabaseLayer.Models;
 using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin;
 
 public interface IChangeAnimalTypeAtAnimalService
 {
-   Animal AddAnimalTypeAtAnimal(long animalId, long animalTypeId);
-   Animal UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeInAnimalDataDto inAnimalDataDto);
-   Animal DeleteAnimalTypeAtAnimal(long animalId, long animalTypeId);
+   long AddAnimalTypeAtAnimal(long animalId, long animalTypeId);
+   long UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeInAnimalDataDto inAnimalDataDto);
+   long DeleteAnimalTypeAtAnimal(long animalId, long animalTypeId);
 }

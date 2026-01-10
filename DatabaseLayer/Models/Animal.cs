@@ -1,4 +1,4 @@
-namespace AnimalChippingWebApi.Core.Models;
+namespace DatabaseLayer.Models;
 
 public class Animal
 {
@@ -11,7 +11,7 @@ public class Animal
     
     public int AccountId { get; set; }  // the chipper id account
     public DateTime ChippingDateTime { get; set; }
-    public DateTime DeathDateTime { get; set; }
+    public DateTime? DeathDateTime { get; set; }
     
     // soft delete
     public bool SoftDeleted { get; set; }
@@ -25,6 +25,7 @@ public class Animal
         ChippingDateTime = DateTime.UtcNow;
         LiveStatus = LiveStatusType.Alive;
         Gender = GenderType.Other;
+        DeathDateTime = null;
     }
 }
 

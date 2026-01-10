@@ -1,5 +1,5 @@
-using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseLayer.Validators;

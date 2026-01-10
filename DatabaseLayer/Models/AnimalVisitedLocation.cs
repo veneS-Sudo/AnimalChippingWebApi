@@ -1,4 +1,4 @@
-namespace AnimalChippingWebApi.Core.Models;
+namespace DatabaseLayer.Models;
 
 public class AnimalVisitedLocation
 {

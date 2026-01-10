@@ -1,11 +1,12 @@
-using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Models;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
+using ServiceLayer.Registration.Exceptions;
 
-namespace ServiceLayer.Admin;
+namespace ServiceLayer.Admin.AnimalServices;
 
 public class AnimalService : IAnimalService
 {
@@ -30,6 +31,9 @@ public class AnimalService : IAnimalService
         
         var animal = _context.Animals
             .AsNoTracking()
+            .Include(a => a.ChippingLocationPoint)
+            .Include(a => a.VisitedLocations)
+            .Include(a => a.AnimalTypes)
             .Single(a => a.AnimalId == animalId);
         return animal;
     }
@@ -38,6 +42,9 @@ public class AnimalService : IAnimalService
     {
         var query = _context.Animals
             .AsNoTracking()
+            .Include(a => a.ChippingLocationPoint)
+            .Include(a => a.VisitedLocations)
+            .Include(a => a.AnimalTypes)
             .FilterAnimalsBy(filterOptions.FilterValues)
             .OrderBy(animal => animal.AnimalId);
         
@@ -46,20 +53,23 @@ public class AnimalService : IAnimalService
         return query.Page(filterOptions.PageNum-1, filterOptions.PageSize);
     }
     
-    public bool AddNewAnimal(AddAnimalDto dto)
+    public long AddNewAnimal(AddAnimalDto dto)
     {
         if (dto.AnimalTypeIds.Count != dto.AnimalTypeIds.Distinct().Count())            // AnimalTypes содержит дубликаты
-            throw new ArgumentException("Duplicate AnimalTypeId");
+            throw new UniqueValueException("Duplicate Animal type ids");
         CheckLocationPointIdWithThrowException(dto.ChippingLocationPointId);
         CheckAccountWithThrowException(dto.AccountId);
+        if (dto.AnimalTypeIds.Count == 0)
+            throw new InvalidOperationException("No animal type selected");
         
         var lp = _context.Locations
             .Single(l => l.LocationPointId == dto.ChippingLocationPointId);
         var animalTypes = _context.AnimalTypes
             .Where(at => dto.AnimalTypeIds.Any(x => x == at.AnimalTypeId)).ToList();
-        
+
         if (animalTypes.Count != dto.AnimalTypeIds.Count)
-            throw new ArgumentException("Animal type not match");
+            throw new ValidationExistsException(
+                $"Animal types(ids: {dto.AnimalTypeIds.Except(animalTypes.Select(at => at.AnimalTypeId))}) not found");
 
         var newAnimal = new Animal
         {
@@ -73,7 +83,7 @@ public class AnimalService : IAnimalService
         };
         _context.Animals.Add(newAnimal);    
         _context.SaveChanges();
-        return true;
+        return newAnimal.AnimalId;
     }
     
     public bool UpdateDataAnimal(long animalId, UpdateDataAnimalDto dto)
@@ -90,10 +100,10 @@ public class AnimalService : IAnimalService
             .Single(l => l.LocationPointId == dto.ChippingLocationPointId);
         
         // Checking
-        if (animal.LiveStatus == LiveStatusType.Dead && dto.LiveStatus == LiveStatusType.Dead)
-            throw new ArgumentException("Animal is dead");
-        if (animal.VisitedLocations.First().LocationPoint.LocationPointId == dto.ChippingLocationPointId)
-            throw new ArgumentException("Chipping location don't equals first visited location point");
+        if (animal.LiveStatus == LiveStatusType.Dead && dto.LiveStatus == LiveStatusType.Alive)
+            throw new InvalidOperationException("Animal is dead");
+        if (animal.VisitedLocations.Any() && animal.VisitedLocations.First().LocationPoint.LocationPointId == dto.ChippingLocationPointId)
+            throw new InvalidOperationException("Chipping location don't equals first visited location point");
         
         animal.Weight = dto.Weight;
         animal.Length = dto.Length;
@@ -121,7 +131,7 @@ public class AnimalService : IAnimalService
                 vl.LocationPoint.LocationPointId != animal.ChippingLocationPoint.LocationPointId)
             && animal.VisitedLocations.Last().LocationPoint.LocationPointId !=
             animal.ChippingLocationPoint.LocationPointId)
-            throw new ArgumentException(
+            throw new InvalidOperationException(
                 $"Animal {animal.AnimalId} leave chipping point, herewith exists other location points");
         
         animal.SoftDeleted = true;

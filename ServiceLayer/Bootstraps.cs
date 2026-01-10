@@ -1,8 +1,9 @@
-using AnimalChippingWebApi.Core.Models;
+using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Extensions.DependencyInjection;
 using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
+using ServiceLayer.Admin.AnimalServices;
 using ServiceLayer.Admin.AnimalServices.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
 using ServiceLayer.Authentication;

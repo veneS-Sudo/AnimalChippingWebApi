@@ -1,4 +1,4 @@
-using AnimalChippingWebApi.Core.Models;
+using DatabaseLayer.Models;
 using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin;

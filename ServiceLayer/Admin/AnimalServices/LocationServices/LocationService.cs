@@ -1,5 +1,5 @@
-using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Registration.Exceptions;

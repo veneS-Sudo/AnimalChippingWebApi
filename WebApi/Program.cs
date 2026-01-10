@@ -1,12 +1,13 @@
 using System.Globalization;
 using System.Security.Claims;
 using AnimalChippingWebApi.Authentication;
-using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
 using AnimalChippingWebApi.Middlewares;
 using AnimalChippingWebApi.Models;
+using AnimalChippingWebApi.Models.Animal;
 using AnimalChippingWebApi.Models.Location;
 using AnimalChippingWebApi.ValidationFilters;
+using DatabaseLayer.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -74,7 +75,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 var groupWithValidationId = app.MapGroup("/")
-    .AddEndpointFilter<IdValidationFilter>()
+    .AddEndpointFilterFactory(IdValidationFilterFactory.ValidateParameterIdFactory)
     .RequireAuthorization();
 var groupWithValidationSearchParams = app.MapGroup("/")
     .AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchPaginationParamsFactory)
@@ -133,7 +134,7 @@ groupWithValidationId.MapPut("/accounts/{accountId:int}", (int accountId,
     if (isUpdated)
     {
         var account = accountService.GetAccountById(accountId);
-        return Results.Ok(account);
+        return TypedResults.Ok(account);
     }
     return Results.NoContent();
 }).WithParameterValidation()
@@ -154,41 +155,115 @@ groupWithValidationId.MapDelete("/accounts/{accountId:int}", (int accountId,
 groupWithValidationId.MapGet("/animals/{animalId:long}", (long animalId, 
     [FromServices] IAnimalService animalService) =>
 {
-    var animal = animalService.GetAnimalById(animalId);
+    var animal = animalService.GetAnimalById(animalId).ToDto();
     return TypedResults.Ok(animal);
 });
 groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] AnimalSearchDto animalSearchDto,
-    [FromServices] IAnimalService animalService) =>
-{
-    if (!Enum.TryParse<LiveStatusType>(animalSearchDto.LifeStatus, true, out var lifeStatusParsed)
-        && animalSearchDto.LifeStatus is not null )
-        return Results.Problem("Available life status: " + string.Join(", ", Enum.GetNames<LiveStatusType>()), statusCode: 400);
-    if (!Enum.TryParse<GenderType>(animalSearchDto.Gender, true,out var genderParsed) 
-        && animalSearchDto.Gender is not null)
-        return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()), statusCode: 400);
-    DateTime? startDateTimeParsed = animalSearchDto.StartDateTime is not null
-        ? DateTime.ParseExact(animalSearchDto.StartDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture) : null;
-    DateTime? endDateTimeParsed = animalSearchDto.EndDateTime is not null
-        ? DateTime.ParseExact(animalSearchDto.EndDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture) : null;
-    var searchOptions = new AnimalSortFilterPageOptions()
+        [FromServices] IAnimalService animalService) =>
     {
-        PageNum = (animalSearchDto.From / animalSearchDto.Size) ?? 1,
-        PageSize = animalSearchDto.Size ?? SortFilterPageBaseOptions.DefaultPageSize,
-        FilterValues = new AnimalSearchFilterValues()
+        if (!Enum.TryParse<LiveStatusType>(animalSearchDto.LifeStatus, true, out var lifeStatusParsed)
+            && animalSearchDto.LifeStatus is not null)
+            return Results.Problem("Available life status: " + string.Join(", ", Enum.GetNames<LiveStatusType>()),
+                statusCode: 400);
+        if (!Enum.TryParse<GenderType>(animalSearchDto.Gender, true, out var genderParsed)
+            && animalSearchDto.Gender is not null)
+            return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()),
+                statusCode: 400);
+        DateTime? startDateTimeParsed = animalSearchDto.StartDateTime is not null
+            ? DateTime.ParseExact(animalSearchDto.StartDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+            : null;
+        DateTime? endDateTimeParsed = animalSearchDto.EndDateTime is not null
+            ? DateTime.ParseExact(animalSearchDto.EndDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture)
+            : null;
+        var searchOptions = new AnimalSortFilterPageOptions()
         {
-            ChipperId = animalSearchDto.ChipperId,
-            ChippingLocationId = animalSearchDto.ChipperLocationId,
-            Gender = animalSearchDto.Gender is not null ? genderParsed : null,
-            LiveStatus = animalSearchDto.LifeStatus is not null ? lifeStatusParsed : null,
-            StartDate = animalSearchDto.StartDateTime is not null ? startDateTimeParsed : null,
-            EndDate = animalSearchDto.EndDateTime is not null ? endDateTimeParsed : null
+            PageNum = (animalSearchDto.From / animalSearchDto.Size) ?? 1,
+            PageSize = animalSearchDto.Size ?? SortFilterPageBaseOptions.DefaultPageSize,
+            FilterValues = new AnimalSearchFilterValues()
+            {
+                ChipperId = animalSearchDto.ChipperId,
+                ChippingLocationId = animalSearchDto.ChipperLocationId,
+                Gender = animalSearchDto.Gender is not null ? genderParsed : null,
+                LiveStatus = animalSearchDto.LifeStatus is not null ? lifeStatusParsed : null,
+                StartDate = animalSearchDto.StartDateTime is not null ? startDateTimeParsed : null,
+                EndDate = animalSearchDto.EndDateTime is not null ? endDateTimeParsed : null
+            }
+        };
+        var result = animalService.GetAnimals(searchOptions)
+            .Skip((animalSearchDto.From % animalSearchDto.Size) ?? 0).Select(a => a.ToDto()).ToList();
+        return TypedResults.Ok(result);
+    }).WithParameterValidation()
+    .AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
+    .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+app.MapPost("/animals", ([FromBody] CreateAnimalDto dto, [FromServices] IAnimalService animalService) =>
+    {
+        if (!Enum.TryParse<GenderType>(dto.Gender, true, out var _))
+            return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()),
+                statusCode: 400);
+        var animalId = animalService.AddNewAnimal(dto.ToAddAnimalDto());
+        var animal = animalService.GetAnimalById(animalId).ToDto();
+        return Results.Created($"/animals/{animalId}", animal);
+    }).RequireAuthorization().WithParameterValidation()
+    .AddEndpointFilter<BaseAnimalIndicatorFilter>()
+    .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+    .AddEndpointFilter<AnimalTypesValidatorFilter>();
+groupWithValidationId.MapPut("/animals/{animalId:long}", ([FromBody] UpdateAnimalDto dto, long animalId, 
+    [FromServices] IAnimalService animalService) =>
+    {
+        if (!Enum.TryParse<LiveStatusType>(dto.LiveStatus, true, out _))
+            return Results.Problem("Available life status: " + string.Join(", ", Enum.GetNames<LiveStatusType>()),
+                statusCode: 400);
+        if (!Enum.TryParse<GenderType>(dto.Gender, true, out var _))
+            return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()),
+                statusCode: 400);
+        var isUpdated = animalService.UpdateDataAnimal(animalId, dto.ToUpdateDataAnimalDto());
+        if (isUpdated)
+        {
+            var animal = animalService.GetAnimalById(animalId).ToDto();
+            return TypedResults.Ok(animal);
         }
-    };
-    var result = animalService.GetAnimals(searchOptions)
-        .Skip((animalSearchDto.From % animalSearchDto.Size) ?? 0).ToList();
-    return TypedResults.Ok(result);
-}).AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
-.AddEndpointFilterFactory(IdValidationFilterFactory.ValidateIdFactory);
+        return Results.NoContent();
+    }).WithParameterValidation()
+.AddEndpointFilter<BaseAnimalIndicatorFilter>()
+.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+groupWithValidationId.MapDelete("/animals/{animalId:long}",
+    (long animalId, [FromServices] IAnimalService animalService) =>
+    {
+        var isDeleted = animalService.SoftDelete(animalId);
+        if (isDeleted)
+        {
+            return Results.Ok();
+        }
+
+        return Results.NoContent();
+    });
+groupWithValidationId.MapPost("/animals/{animalId:long}/types/{typeId:long}",
+    (long animalId, long typeId, [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
+        [FromServices] IAnimalService animalService) =>
+    {
+        var createdAnimalId = changeAnimalTypeService.AddAnimalTypeAtAnimal(animalId, typeId);
+        var animal = animalService.GetAnimalById(createdAnimalId).ToDto();
+        return Results.Created($"/animals/{createdAnimalId}", animal);
+    });
+groupWithValidationId.MapPut("/animals/{animalId:long}/types",
+    (long animalId, [FromBody] UpdateAnimalTypeInAnimalDataDto dto,
+        [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
+        [FromServices] IAnimalService animalService) =>
+    {
+        var updatedAnimalId = changeAnimalTypeService.UpdateAnimalTypeAtAnimal(animalId, dto);
+        var updatedAnimal = animalService.GetAnimalById(updatedAnimalId).ToDto();
+        return TypedResults.Ok(updatedAnimal);
+    }).WithParameterValidation().
+    AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+groupWithValidationId.MapDelete("/animals/{animalId:long}/types/{typeId:long}",
+    (long animalId, long typeId, [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
+        [FromServices] IAnimalService animalService) =>
+    {
+        var changedAnimalId = changeAnimalTypeService.DeleteAnimalTypeAtAnimal(animalId, typeId);
+        var animal = animalService.GetAnimalById(changedAnimalId).ToDto();
+        return TypedResults.Ok(animal);
+    });
+
 
 // ===========================================
 // animal type endpoints
@@ -213,7 +288,7 @@ groupWithValidationId.MapPut("/animals/types/{typeId:long}", (long typeId, [From
     if (isUpdated)
     {
         var animalType = typeAnimalService.GetAnimalTypeById(typeId);
-        return Results.Ok(animalType);
+        return TypedResults.Ok(animalType);
     }
     return Results.NoContent();
 }).WithParameterValidation();
@@ -253,7 +328,7 @@ groupWithValidationId.MapPut("/location/{pointId:long}", (long pointId, [FromBod
     if (isUpdated)
     {
         var location = locationService.GetLocationPointById(pointId);
-        return Results.Ok(location);
+        return TypedResults.Ok(location);
     }
     return Results.NoContent();
 }).WithParameterValidation();
@@ -297,6 +372,6 @@ groupWithValidationSearchParams.MapGet("/animals/{animalId:long}/locations", ([A
         .Skip((visitedLocationSearchDto.From % visitedLocationSearchDto.Size) ?? 0).ToList();
     return TypedResults.Ok(result);
 }).AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
-.AddEndpointFilterFactory(IdValidationFilterFactory.ValidateIdFactory);
+.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
 
 app.Run();

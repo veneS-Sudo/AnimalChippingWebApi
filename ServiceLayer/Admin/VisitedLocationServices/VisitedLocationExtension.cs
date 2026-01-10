@@ -1,5 +1,5 @@
 using System.Globalization;
-using AnimalChippingWebApi.Core.Models;
+using DatabaseLayer.Models;
 
 namespace ServiceLayer.Admin;
 

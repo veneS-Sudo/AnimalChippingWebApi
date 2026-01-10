@@ -1,5 +1,3 @@
-using AnimalChippingWebApi.Core.Models;
-
 namespace ServiceLayer.Admin.Dto;
 
 public class UpdateAnimalTypeInAnimalDataDto

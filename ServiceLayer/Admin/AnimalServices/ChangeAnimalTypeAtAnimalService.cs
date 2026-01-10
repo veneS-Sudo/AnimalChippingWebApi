@@ -1,8 +1,9 @@
-using AnimalChippingWebApi.Core.Models;
 using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
+using ServiceLayer.Registration.Exceptions;
 
 namespace ServiceLayer.Admin;
 
@@ -22,7 +23,7 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
         _animalTypeValidator = animalTypeValidator;
     }
 
-    public Animal AddAnimalTypeAtAnimal(long animalId, long animalTypeId)
+    public long AddAnimalTypeAtAnimal(long animalId, long animalTypeId)
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckAnimalTypeIdWithThrowException(animalTypeId);
@@ -31,14 +32,14 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
             .Include(a => a.AnimalTypes)
             .Single(a => a.AnimalId == animalId);
         if (animal.AnimalTypes.Any(x => x.AnimalTypeId == animalTypeId))
-            throw new Exception($"Animal type {animalTypeId} already exists");
+            throw new UniqueValueException($"Animal type {animalTypeId} already exists");
         
         animal.AnimalTypes.Add(_context.AnimalTypes.Single(x => x.AnimalTypeId == animalTypeId));
         _context.SaveChanges();
-        return animal;
+        return animal.AnimalId;
     }
 
-    public Animal UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeInAnimalDataDto inAnimalDataDto)
+    public long UpdateAnimalTypeAtAnimal(long animalId, UpdateAnimalTypeInAnimalDataDto inAnimalDataDto)
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckAnimalTypeIdWithThrowException(inAnimalDataDto.OldAnimalTypeId);
@@ -49,9 +50,9 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
             .Single(a => a.AnimalId == animalId);
         
         if (animal.AnimalTypes.All(t => t.AnimalTypeId != inAnimalDataDto.OldAnimalTypeId))
-            throw new Exception($"The animal type {inAnimalDataDto.OldAnimalTypeId} does not exist at animal {animalId}");
+            throw new ValidationExistsException($"The animal type {inAnimalDataDto.OldAnimalTypeId} does not exist at animal {animalId}");
         if (animal.AnimalTypes.Any(t => t.AnimalTypeId == inAnimalDataDto.NewAnimalTypeId))
-            throw new Exception($"The animal type {inAnimalDataDto.NewAnimalTypeId} already exists at animal {animalId}");
+            throw new UniqueValueException($"The animal type {inAnimalDataDto.NewAnimalTypeId} already exists at animal {animalId}");
         
         using (var transaction = _context.Database.BeginTransaction())
         {
@@ -59,13 +60,13 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
             animal.AnimalTypes.Remove(
                 animal.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.OldAnimalTypeId));
             animal.AnimalTypes.Add(
-                animal.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.NewAnimalTypeId));
+                _context.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.NewAnimalTypeId));
         }
         _context.SaveChanges();
-        return animal;
+        return animal.AnimalId;
     }
 
-    public Animal DeleteAnimalTypeAtAnimal(long animalId, long animalTypeId)
+    public long DeleteAnimalTypeAtAnimal(long animalId, long animalTypeId)
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckAnimalTypeIdWithThrowException(animalTypeId);
@@ -75,11 +76,13 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
             .Single(a => a.AnimalId == animalId);
         
         if (animal.AnimalTypes.All(t => t.AnimalTypeId != animalTypeId))
-            throw new Exception($"The animal type with id {animalTypeId} does not exist");
+            throw new ValidationExistsException($"The animal type with id {animalTypeId} does not exist");
+        if (animal.AnimalTypes.Count == 1)
+            throw new InvalidOperationException($"This animal has only one type: {animalTypeId}");
         
         animal.AnimalTypes.Remove(animal.AnimalTypes.Single(t => t.AnimalTypeId == animalTypeId));
         _context.SaveChanges();
-        return animal;
+        return animal.AnimalId;
     }
 
     private void CheckAnimalIdWithThrowException(long animalId)
