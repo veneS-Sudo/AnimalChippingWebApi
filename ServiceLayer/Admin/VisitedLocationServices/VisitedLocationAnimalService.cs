@@ -5,7 +5,7 @@ using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
 using ServiceLayer.Admin.Dto;
 
-namespace ServiceLayer.Admin;
+namespace ServiceLayer.Admin.VisitedLocationServices;
 
 public class VisitedLocationAnimalService : IVisitedLocationAnimalService
 {
@@ -26,6 +26,20 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         _visitedLocationValidator = visitedLocationValidator;
     }
 
+    public AnimalVisitedLocation GetAnimalVisitedLocationById(long animalId, long visitedLocationId)
+    {
+        CheckAnimalIdWithThrowException(animalId);
+        CheckVisitedLocationPointWithThrowException(visitedLocationId);
+
+        var visitedLocation = _context.Animals
+            .AsNoTracking()
+            .Include(a => a.VisitedLocations)
+            .ThenInclude(vl => vl.LocationPoint)
+            .First(a => a.AnimalId == animalId).VisitedLocations
+            .Single(vl => vl.AnimalVisitedLocationId == visitedLocationId);
+        return visitedLocation;
+    }
+    
     public IQueryable<AnimalVisitedLocation> GetAnimalVisitedLocationsById(
         long animalId, 
         LocationVisitedSortFilterOptions sortFilterOptions)
@@ -35,6 +49,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         var query = _context.Animals
             .AsNoTracking()
             .Include(a => a.VisitedLocations)
+            .ThenInclude(vl => vl.LocationPoint)
             .Where(a => a.AnimalId == animalId)
             .SelectMany(a => a.VisitedLocations)
             .FilterLocationBy(sortFilterOptions.VisitedLocationFilterBy, sortFilterOptions.FilterValue)
@@ -53,16 +68,20 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         var animal = _context.Animals
             .Include(a => a.ChippingLocationPoint)
             .Include(a => a.VisitedLocations)
-            .ThenInclude(l => l.LocationPoint)
             .Single(a => a.AnimalId == animalId);
+        _context.Entry(animal).Collection(a => a.VisitedLocations).Load();
+        foreach (var visitedLocationEntry in animal.VisitedLocations)
+        {
+            _context.Entry(visitedLocationEntry).Reference(vl => vl.LocationPoint).Load();
+        }
         if (animal.LiveStatus == LiveStatusType.Dead)
             throw new InvalidOperationException("Animal is dead");
         
         var point = _context.Locations
             .Single(p => p.LocationPointId == locationId);
-        if (point.LocationPointId == animal.ChippingLocationPoint.LocationPointId)
+        if (!animal.VisitedLocations.Any() && point.LocationPointId == animal.ChippingLocationPoint.LocationPointId)
             throw new InvalidOperationException("Location point is already added");
-        if (point.LocationPointId == animal.VisitedLocations.Last().LocationPoint.LocationPointId)
+        if (point.LocationPointId == animal.VisitedLocations.LastOrDefault()?.LocationPoint.LocationPointId)
             throw new InvalidOperationException("Visited location point is already added");
         
         var visitedLocation = new AnimalVisitedLocation
@@ -76,7 +95,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         return visitedLocation;
     }
 
-    public AnimalVisitedLocation UpdateVisitedLocationToAnimal(long animalId, UpdateVisitedLocationDto dto)
+    public bool UpdateVisitedLocationToAnimal(long animalId, UpdateVisitedLocationDto dto)
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckVisitedLocationPointWithThrowException(dto.VisitedLocationId);
@@ -89,12 +108,16 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             .Single(a => a.AnimalId == animalId);
         
         var point = animal.VisitedLocations
-            .Single(vl => vl.AnimalVisitedLocationId == dto.VisitedLocationId);
+            .SingleOrDefault(vl => vl.AnimalVisitedLocationId == dto.VisitedLocationId);
+        if (point is null)
+            throw new ValidationExistsException($"The animal haven't visited location with id {dto.VisitedLocationId}");
         
         if (point.LocationPoint.LocationPointId == dto.LocationPointId)
             throw new InvalidOperationException($"Location point {dto.LocationPointId} already exists");
-        if (animal.ChippingLocationPoint.LocationPointId == dto.LocationPointId)
-            throw new InvalidOperationException($"Trying set chipping point as visited point {dto.LocationPointId} already exists");
+        if (animal.VisitedLocations.First().AnimalVisitedLocationId == dto.VisitedLocationId
+            && animal.ChippingLocationPoint.LocationPointId == dto.LocationPointId)
+            throw new InvalidOperationException(
+                $"Trying set chipping point as first visited point {dto.LocationPointId} already exists");
         var visitedLocations = animal.VisitedLocations.ToList();
         var index = visitedLocations.IndexOf(point);
         if ((index > 0 && visitedLocations[index - 1].LocationPoint.LocationPointId == dto.LocationPointId) ||
@@ -105,8 +128,8 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         point.LocationPoint = _context.Locations
             .Single(p => p.LocationPointId == dto.LocationPointId);
         
-        _context.SaveChanges();
-        return point;
+        var result = _context.SaveChanges();
+        return result > 0;
     }
 
     public bool DeleteVisitedLocationFromAnimalData(long animalId, long visitedLocationId)
@@ -115,7 +138,9 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         CheckVisitedLocationPointWithThrowException(visitedLocationId);
         
         var animal = _context.Animals
+            .Include(a => a.ChippingLocationPoint)
             .Include(a => a.VisitedLocations)
+            .ThenInclude(vl => vl.LocationPoint)
             .Single(a => a.AnimalId == animalId);
 
         var deleted = false;
@@ -123,8 +148,13 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             deleted = animal.VisitedLocations.Remove(
                 animal.VisitedLocations.Single(x => x.AnimalVisitedLocationId == visitedLocationId));
         else
-            throw new Exception($"Animal dont have visited location {visitedLocationId} does not exist");
+            throw new ValidationExistsException($"Animal dont have visited location {visitedLocationId} does not exist");
 
+        if (animal.VisitedLocations.Any() 
+            && animal.VisitedLocations.First().LocationPoint.LocationPointId == animal.ChippingLocationPoint.LocationPointId)
+            animal.VisitedLocations.Remove(animal.VisitedLocations.First());
+            
+        _context.SaveChanges();
         return deleted;
     }
 

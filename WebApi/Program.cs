@@ -6,6 +6,7 @@ using AnimalChippingWebApi.Middlewares;
 using AnimalChippingWebApi.Models;
 using AnimalChippingWebApi.Models.Animal;
 using AnimalChippingWebApi.Models.Location;
+using AnimalChippingWebApi.Models.VisitedLocation;
 using AnimalChippingWebApi.ValidationFilters;
 using DatabaseLayer.Models;
 using Microsoft.AspNetCore.Authentication;
@@ -20,6 +21,7 @@ using ServiceLayer.Admin.AnimalServices.LocationServices;
 using ServiceLayer.Admin.Dto;
 using ServiceLayer.Admin.Generic;
 using ServiceLayer.Admin.TypeAnimalServices;
+using ServiceLayer.Admin.VisitedLocationServices;
 using ServiceLayer.Registration;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -369,9 +371,48 @@ groupWithValidationSearchParams.MapGet("/animals/{animalId:long}/locations", ([A
             : DateTime.MaxValue)
     };
     var result = visitedLocationService.GetAnimalVisitedLocationsById(visitedLocationSearchDto.AnimalId, searchOptions)
-        .Skip((visitedLocationSearchDto.From % visitedLocationSearchDto.Size) ?? 0).ToList();
+        .Skip((visitedLocationSearchDto.From % visitedLocationSearchDto.Size) ?? 0).Select(vl => vl.ToDto()).ToList();
     return TypedResults.Ok(result);
 }).AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
 .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+groupWithValidationId.MapGet("/animals/{animalId:long}/locations/{visitedLocationId}", (long animalId,
+    long visitedLocationId,
+    [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
+{
+    var visitedLocation = visitedLocationService.GetAnimalVisitedLocationById(animalId, visitedLocationId).ToDto();
+    return TypedResults.Ok(visitedLocation);
+});
+groupWithValidationId.MapPost("/animals/{animalId:long}/locations/{pointId:long}", (long animalId, long pointId,
+    [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
+{
+    var addedVisitedLocation = visitedLocationService.AddVisitedLocationToAnimal(animalId, pointId).ToDto();
+    return Results.Created($"/animals/{animalId}/locations/{addedVisitedLocation.VisitedLocationId}",
+        addedVisitedLocation);
+});
+groupWithValidationId.MapPut("/animals/{animalId:long}/locations",
+    (long animalId, UpdateVisitedLocationDto visitedLocationDto,
+        [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
+    {
+        var isUpdated = visitedLocationService.UpdateVisitedLocationToAnimal(animalId, visitedLocationDto);
+        if (isUpdated)
+        {
+            var visitedLocation = visitedLocationService
+                .GetAnimalVisitedLocationById(animalId, visitedLocationDto.VisitedLocationId).ToDto();
+            return TypedResults.Ok(visitedLocation);
+        }
 
+        return Results.NoContent();
+    }).AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+groupWithValidationId.MapDelete("/animals/{animalId:long}/locations/{visitedLocationId:long}", (long animalId,
+    long visitedLocationId,
+    [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
+{
+    var isDeleted = visitedLocationService.DeleteVisitedLocationFromAnimalData(animalId, visitedLocationId);
+    if (isDeleted)
+    {
+        return Results.Ok();
+    }
+
+    return Results.NoContent();
+});
 app.Run();

@@ -1,4 +1,5 @@
 using DatabaseLayer.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ServiceLayer.Admin.AccountServices;
 
@@ -10,11 +11,11 @@ public static class AccountSearchExtension
             return query;
         
         if (values.FirstName is not null)
-            query = query.Where(a => a.FirstName.Contains(values.FirstName, StringComparison.CurrentCultureIgnoreCase));
+            query = query.Where(a => EF.Functions.Like(a.FirstName, $"%{values.FirstName}%"));
         if (values.LastName is not null)
-            query = query.Where(a => a.LastName.Contains(values.LastName, StringComparison.CurrentCultureIgnoreCase));
+            query = query.Where(a => EF.Functions.Like(a.LastName, $"%{values.LastName}%"));
         if (values.Email is not null)
-            query = query.Where(a => a.Email.Contains(values.Email, StringComparison.CurrentCultureIgnoreCase));
+            query = query.Where(a => EF.Functions.Like(a.Email, $"%{values.Email}%"));
 
         return query;
     }

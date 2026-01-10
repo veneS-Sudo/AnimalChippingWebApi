@@ -6,6 +6,7 @@ using ServiceLayer.Admin.AccountServices;
 using ServiceLayer.Admin.AnimalServices;
 using ServiceLayer.Admin.AnimalServices.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
+using ServiceLayer.Admin.VisitedLocationServices;
 using ServiceLayer.Authentication;
 using ServiceLayer.Registration;
 

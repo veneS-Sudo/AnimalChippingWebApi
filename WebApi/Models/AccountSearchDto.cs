@@ -5,7 +5,6 @@ namespace AnimalChippingWebApi.Models;
 public class AccountSearchDto : SearchModel
 {
     [FromQuery(Name = "email")]
-     [EmailAddress]
      public string? Email { get; set; }
      
     [FromQuery(Name = "firstName")]

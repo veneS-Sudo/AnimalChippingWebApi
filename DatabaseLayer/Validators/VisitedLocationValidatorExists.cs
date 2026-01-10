@@ -17,7 +17,7 @@ public class VisitedLocationValidatorExists : IGenericValidator<AnimalVisitedLoc
     {
         var vl = _context.AnimalVisitedLocations
             .AsNoTracking()
-            .FirstOrDefault(x => x.AnimalId == input.AnimalId);
+            .FirstOrDefault(x => x.AnimalVisitedLocationId == input.AnimalVisitedLocationId);
         return vl is not null;
     }
 
