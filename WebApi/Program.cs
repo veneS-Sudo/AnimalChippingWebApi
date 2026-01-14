@@ -416,3 +416,5 @@ groupWithValidationId.MapDelete("/animals/{animalId:long}/locations/{visitedLoca
     return Results.NoContent();
 });
 app.Run();
+
+public partial class Program {}
