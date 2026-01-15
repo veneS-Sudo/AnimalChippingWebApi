@@ -1,7 +1,7 @@
 using DatabaseLayer.Models;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.AnimalServices.SearchPagination;
 
-namespace ServiceLayer.Admin;
+namespace ServiceLayer.Admin.AnimalServices;
 
 public interface IAnimalService
 {

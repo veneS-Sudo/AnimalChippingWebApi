@@ -1,4 +1,4 @@
-using ServiceLayer.Registration.Exceptions;
+using ServiceLayer.Exceptions;
 
 namespace AnimalChippingWebApi.Middlewares;
 

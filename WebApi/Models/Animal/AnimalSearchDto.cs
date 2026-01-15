@@ -1,3 +1,4 @@
+using AnimalChippingWebApi.Models.Search;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AnimalChippingWebApi.Models.Animal;

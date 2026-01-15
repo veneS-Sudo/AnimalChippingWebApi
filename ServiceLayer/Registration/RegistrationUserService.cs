@@ -1,6 +1,6 @@
-using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Context;
 using DatabaseLayer.Models;
-using ServiceLayer.Registration.Exceptions;
+using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Registration;
 

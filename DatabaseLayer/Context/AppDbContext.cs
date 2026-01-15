@@ -1,7 +1,7 @@
 using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace AnimalChippingWebApi.DataBaseLayer.Context;
+namespace DatabaseLayer.Context;
 
 public class AppDbContext : DbContext
 {

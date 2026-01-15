@@ -1,4 +1,4 @@
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.AccountServices.SearchPagination;
 
 namespace ServiceLayer.Admin.AccountServices;
 

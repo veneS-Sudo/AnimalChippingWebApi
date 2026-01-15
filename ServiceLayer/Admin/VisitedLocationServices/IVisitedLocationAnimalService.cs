@@ -1,5 +1,5 @@
 using DatabaseLayer.Models;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.VisitedLocationServices.SearchPagination;
 
 namespace ServiceLayer.Admin.VisitedLocationServices;
 

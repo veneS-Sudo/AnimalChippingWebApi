@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.AnimalServices;
 
 namespace AnimalChippingWebApi.Models.Animal;
 

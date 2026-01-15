@@ -1,4 +1,3 @@
-
 namespace AnimalChippingWebApi.Middlewares;
 
 public class ExceptionInvalidDataHandlerMiddleware

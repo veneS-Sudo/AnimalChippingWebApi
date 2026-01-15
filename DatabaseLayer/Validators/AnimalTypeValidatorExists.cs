@@ -1,5 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore;
 

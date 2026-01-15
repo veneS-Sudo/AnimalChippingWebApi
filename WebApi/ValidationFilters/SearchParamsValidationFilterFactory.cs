@@ -1,6 +1,6 @@
 using System.Globalization;
 using System.Reflection;
-using AnimalChippingWebApi.Models;
+using AnimalChippingWebApi.Models.Search;
 
 namespace AnimalChippingWebApi.ValidationFilters;
 

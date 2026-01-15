@@ -1,5 +1,3 @@
-using System.Drawing;
-
 namespace DatabaseLayer.Validators;
 
 public class ValidationExistsException : Exception

@@ -1,10 +1,10 @@
 using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
 using ServiceLayer.Admin.AnimalServices;
-using ServiceLayer.Admin.AnimalServices.LocationServices;
+using ServiceLayer.Admin.AnimalServices.AnimalTypeAtAnimal;
+using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
 using ServiceLayer.Admin.VisitedLocationServices;
 using ServiceLayer.Authentication;

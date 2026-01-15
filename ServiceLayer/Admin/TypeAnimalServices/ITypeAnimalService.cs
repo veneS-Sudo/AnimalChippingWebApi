@@ -1,5 +1,4 @@
 using DatabaseLayer.Models;
-using ServiceLayer.Admin.Dto;
 
 namespace ServiceLayer.Admin.TypeAnimalServices;
 

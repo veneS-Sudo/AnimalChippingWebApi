@@ -1,9 +1,9 @@
-using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.VisitedLocationServices.SearchPagination;
 
 namespace ServiceLayer.Admin.VisitedLocationServices;
 
