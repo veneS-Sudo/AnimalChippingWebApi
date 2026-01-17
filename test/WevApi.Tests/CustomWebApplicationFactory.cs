@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace WevApi.Tests;
 
@@ -34,6 +35,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             });
             services.AddHostedService<DataBaseMigrationHostedService>();
         });
+        builder.ConfigureLogging(logging => logging.ClearProviders());
     }
 
     protected override void ConfigureClient(HttpClient client)
