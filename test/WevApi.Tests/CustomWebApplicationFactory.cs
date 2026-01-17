@@ -1,6 +1,6 @@
 using System.Data.Common;
 using System.Net.Http.Headers;
-using AnimalChippingWebApi.DataBaseLayer.Context;
+using DatabaseLayer.Context;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;

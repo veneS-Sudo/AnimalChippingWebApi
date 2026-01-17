@@ -8,7 +8,7 @@ using ServiceLayer.Admin.AnimalServices;
 using ServiceLayer.Admin.Dto;
 using ServiceLayer.Registration.Exceptions;
 using AnimalVisitedLocation = DatabaseLayer.Models.AnimalVisitedLocation;
-using AppDbContext = AnimalChippingWebApi.DataBaseLayer.Context.AppDbContext;
+using AppDbContext = DatabaseLayer.Context.AppDbContext;
 
 namespace ServiceLayer.Tests;
 
