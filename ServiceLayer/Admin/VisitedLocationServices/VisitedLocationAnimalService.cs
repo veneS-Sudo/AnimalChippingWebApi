@@ -3,6 +3,7 @@ using DatabaseLayer.Models;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceLayer.Admin.VisitedLocationServices.SearchPagination;
 
 namespace ServiceLayer.Admin.VisitedLocationServices;
@@ -13,17 +14,19 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
     private readonly IGenericValidator<Animal> _animalValidator;
     private readonly IGenericValidator<LocationPoint> _locationPointValidator;
     private readonly IGenericValidator<AnimalVisitedLocation> _visitedLocationValidator;
+    private readonly ILogger<VisitedLocationAnimalService> _logger;
 
     public VisitedLocationAnimalService(
         AppDbContext context, 
         IGenericValidator<Animal> validator, 
         IGenericValidator<LocationPoint> locationPointValidator,
-        IGenericValidator<AnimalVisitedLocation> visitedLocationValidator)
+        IGenericValidator<AnimalVisitedLocation> visitedLocationValidator, ILogger<VisitedLocationAnimalService> logger)
     {
         _context = context;
         _animalValidator = validator;
         _locationPointValidator = locationPointValidator;
         _visitedLocationValidator = visitedLocationValidator;
+        _logger = logger;
     }
 
     public AnimalVisitedLocation GetAnimalVisitedLocationById(long animalId, long visitedLocationId)
@@ -37,6 +40,8 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             .ThenInclude(vl => vl.LocationPoint)
             .First(a => a.AnimalId == animalId).VisitedLocations
             .Single(vl => vl.AnimalVisitedLocationId == visitedLocationId);
+        _logger.LogInformation("Getting visited location with id {VisitedLocationId} by animal {AnimalId}",
+            visitedLocationId, animalId);
         return visitedLocation;
     }
     
@@ -56,7 +61,10 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             .OrderBy(vl => vl.DateTimeOfVisitLocationPoint);
         
         sortFilterOptions.SetupRest(query);
-        
+
+        _logger.LogInformation(
+            "Getting visited locations by animal {AnimalId} with search options: {SearchFilterValue}", animalId,
+            sortFilterOptions.FilterValue);
         return query.Page(sortFilterOptions.PageNum-1, sortFilterOptions.PageSize);
     }
 
@@ -92,6 +100,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         };
         animal.VisitedLocations.Add(visitedLocation);
         _context.SaveChanges();
+        _logger.LogInformation("Added location point with id {LocationId} to animal {AnimalId}", locationId, animalId);
         return visitedLocation;
     }
 
@@ -129,6 +138,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             .Single(p => p.LocationPointId == dto.LocationPointId);
         
         var result = _context.SaveChanges();
+        _logger.LogInformation("Updated visited location with id {VisitedLocation} at animal {AnimalId}", dto.VisitedLocationId, animalId);
         return result > 0;
     }
 
@@ -155,16 +165,19 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
             animal.VisitedLocations.Remove(animal.VisitedLocations.First());
             
         _context.SaveChanges();
+        _logger.LogInformation("Delete visited location with id {VisitedLocationId} at animal {AnimalId}", visitedLocationId, animalId);
         return deleted;
     }
 
     private void CheckAnimalIdWithThrowException(long animalId)
     {
+        _logger.LogInformation("Checking animal with id {AnimalId}", animalId);
         _animalValidator.CheckWithThrowExceptions(new Animal {AnimalId = animalId}, $"Animal {animalId} not found.");
     }
 
     private void CheckVisitedLocationPointWithThrowException(long visitedLocationPointId)
     {
+        _logger.LogInformation("Checking visited location point with id {VisitedLocationId}", visitedLocationPointId);
         _visitedLocationValidator.CheckWithThrowExceptions(
             new AnimalVisitedLocation() {AnimalVisitedLocationId = visitedLocationPointId},
             $"Visited location point with id {visitedLocationPointId} does not exist");
@@ -172,6 +185,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
 
     private void CheckLocationPointWithThrowException(long locationId)
     {
+        _logger.LogInformation("Checking location point with id {LocationId}", locationId);
         _locationPointValidator.CheckWithThrowExceptions(
             new LocationPoint {LocationPointId = locationId},
             $"Location {locationId} not found.");

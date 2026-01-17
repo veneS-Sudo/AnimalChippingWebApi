@@ -9,4 +9,9 @@ public class Account
     public string Password { get; set; }
     
     public ICollection<Animal> ChippedAnimals { get; set; }
+
+    public override string ToString()
+    {
+        return $"FirstName = {FirstName}; LastName = {LastName}; Email = {Email}";
+    }
 }

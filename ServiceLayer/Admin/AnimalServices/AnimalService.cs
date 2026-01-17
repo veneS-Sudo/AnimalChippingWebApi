@@ -3,6 +3,7 @@ using DatabaseLayer.Models;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceLayer.Admin.AnimalServices.SearchPagination;
 using ServiceLayer.Exceptions;
 
@@ -14,16 +15,18 @@ public class AnimalService : IAnimalService
     private readonly IGenericValidator<Animal> _animalValidator;
     private readonly IGenericValidator<LocationPoint> _locationPointValidator;
     private readonly IGenericValidator<Account> _accountValidator;
+    private readonly ILogger<AnimalService> _logger;
 
     public AnimalService(AppDbContext context,
         IGenericValidator<Animal> animalValidator,
         IGenericValidator<LocationPoint> locationPointValidator,
-        IGenericValidator<Account> accountValidator)
+        IGenericValidator<Account> accountValidator, ILogger<AnimalService> logger)
     {
         _context = context;
         _animalValidator = animalValidator;
         _locationPointValidator = locationPointValidator;
         _accountValidator = accountValidator;
+        _logger = logger;
     }
 
     public Animal GetAnimalById(long animalId)
@@ -35,6 +38,7 @@ public class AnimalService : IAnimalService
             .Include(a => a.VisitedLocations)
             .Include(a => a.AnimalTypes)
             .Single(a => a.AnimalId == animalId);
+        _logger.LogInformation("Getting animal by id {AnimalId}", animalId);
         return animal;
     }
 
@@ -49,7 +53,13 @@ public class AnimalService : IAnimalService
             .OrderBy(animal => animal.AnimalId);
         
         filterOptions.SetupRest(query);
-        
+
+        _logger.LogInformation(
+            "Getting animal by filter options: {ChipperId}, {ChippingLocationId}, {Gender}, {LiveStatus}, {StartDate}, {EndDate}",
+            filterOptions.FilterValues.ChipperId,
+            filterOptions.FilterValues.ChippingLocationId, filterOptions.FilterValues.Gender,
+            filterOptions.FilterValues.LiveStatus, filterOptions.FilterValues.StartDate,
+            filterOptions.FilterValues.EndDate);
         return query.Page(filterOptions.PageNum-1, filterOptions.PageSize);
     }
     
@@ -83,6 +93,7 @@ public class AnimalService : IAnimalService
         };
         _context.Animals.Add(newAnimal);    
         _context.SaveChanges();
+        _logger.LogInformation("Added new animal with id {AnimalId} to database", newAnimal.AnimalId);
         return newAnimal.AnimalId;
     }
     
@@ -114,6 +125,9 @@ public class AnimalService : IAnimalService
         animal.ChippingLocationPoint = lp;
         
         var result = _context.SaveChanges();
+        _logger.LogInformation(
+            "Updated animal with id {AnimalId}; new Data: {AccountId}, {LiveStatus}, {Gender}, {Weight}, {Length}, {Height}",
+            animalId, dto.AccountId, dto.LiveStatus, dto.Gender, dto.Weight, dto.Length, dto.Height);
         return result > 0;
     }
     
@@ -137,22 +151,26 @@ public class AnimalService : IAnimalService
         animal.SoftDeleted = true;
         _context.SaveChanges();
         
+        _logger.LogInformation("Soft deleted animal with id {AnimalId}", animalId);
         return animal.SoftDeleted;
     }
 
     private void CheckAnimalIdWithThrowException(long animalId)
     {
+        _logger.LogInformation("Checking animal with id {AnimalId} to exists", animalId);
         _animalValidator.CheckWithThrowExceptions(new Animal { AnimalId = animalId }, $"Animal {animalId} not found.");
     }
 
     private void CheckLocationPointIdWithThrowException(long locationPointId)
     {
+        _logger.LogInformation("Checking location point with id {LocationPointId} to exists", locationPointId);
         _locationPointValidator.CheckWithThrowExceptions(
             new LocationPoint { LocationPointId = locationPointId }, $"Location {locationPointId} not found.");
     }
 
     private void CheckAccountWithThrowException(int accountId)
     {
+        _logger.LogInformation("Checking account with {AccountId} to exists", accountId);
         _accountValidator.CheckWithThrowExceptions(new Account() {AccountId = accountId}, $"Account {accountId} not found.");
     }
 }

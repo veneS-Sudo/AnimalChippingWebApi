@@ -15,14 +15,19 @@ public class UserAuthenticationHandler : AuthenticationHandler<AuthenticationSch
 {
     public const string AuthenticationSchemeName = "Basic";
     private readonly IUserAuthenticationService _accountService;
+    private readonly ILogger<UserAuthenticationHandler> _logger;
+
     public UserAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options, ILoggerFactory logger,
-        UrlEncoder encoder, ISystemClock clock, IUserAuthenticationService accountService) : base(options, logger, encoder, clock)
+        UrlEncoder encoder, ISystemClock clock, IUserAuthenticationService accountService,
+        ILogger<UserAuthenticationHandler> logger1) : base(options, logger, encoder, clock)
     {
         _accountService = accountService;
+        _logger = logger1;
     }
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        
         string? message = null;
         var endpoint = Context.GetEndpoint();
         if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
@@ -30,15 +35,18 @@ public class UserAuthenticationHandler : AuthenticationHandler<AuthenticationSch
             return AuthenticateResult.NoResult();
         }
 
+        _logger.LogInformation("Trying to authenticate");
         if (!Request.Headers.ContainsKey(HeaderNames.Authorization))
         {
             message = "Missing Authorization Header";
+            _logger.LogWarning("Authentication error: {AuthenticationError}", message);
             return AuthenticateResult.Fail(message);
         }
 
         if (!Request.Headers[HeaderNames.Authorization].ToString().StartsWith("Basic"))
         {
             message = "Invalid Authorization Header: missing 'Basic' at start";
+            _logger.LogWarning("Authentication error: {AuthenticationError}", message);
             return AuthenticateResult.Fail(message, new AuthenticationProperties(new Dictionary<string, string>() {{"Error", message}}!));
         }
         Account? user = null;
@@ -53,11 +61,15 @@ public class UserAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         }
         catch 
         {
+            _logger.LogWarning("Authentication error: {AuthenticationError}", "Invalid Authorization Header");
             return AuthenticateResult.Fail("Invalid Authorization Header");
         }
 
         if (user is null)
+        {
+            _logger.LogWarning("Authentication error: {AuthenticationError}", "Invalid Username or Password");
             return AuthenticateResult.Fail("Invalid Username or Password");
+        }
         
         var claims = new[]
         {
@@ -69,6 +81,7 @@ public class UserAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
 
+        _logger.LogInformation("Authentication success");
         return AuthenticateResult.Success(ticket);
     }
 

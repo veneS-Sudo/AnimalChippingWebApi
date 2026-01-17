@@ -2,6 +2,7 @@ using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Admin.AnimalServices.AnimalTypeAtAnimal;
@@ -11,15 +12,17 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
     private readonly AppDbContext _context;
     private readonly IGenericValidator<Animal> _animalValidator;
     private readonly IGenericValidator<AnimalType> _animalTypeValidator;
+    private readonly ILogger<ChangeAnimalTypeAtAnimalService> _logger;
 
     public ChangeAnimalTypeAtAnimalService(
         AppDbContext context, 
         IGenericValidator<Animal> animalValidator,
-        IGenericValidator<AnimalType> animalTypeValidator)
+        IGenericValidator<AnimalType> animalTypeValidator, ILogger<ChangeAnimalTypeAtAnimalService> logger)
     {
         _context = context;
         _animalValidator = animalValidator;
         _animalTypeValidator = animalTypeValidator;
+        _logger = logger;
     }
 
     public long AddAnimalTypeAtAnimal(long animalId, long animalTypeId)
@@ -35,6 +38,7 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
         
         animal.AnimalTypes.Add(_context.AnimalTypes.Single(x => x.AnimalTypeId == animalTypeId));
         _context.SaveChanges();
+        _logger.LogInformation("Added animal type {AnimalTypeId} to animal {AnimalId}", animalTypeId, animalId);
         return animal.AnimalId;
     }
 
@@ -61,6 +65,9 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
             animal.AnimalTypes.Add(
                 _context.AnimalTypes.Single(t => t.AnimalTypeId == inAnimalDataDto.NewAnimalTypeId));
         }
+
+        _logger.LogInformation("Updated animal {AnimalId} type {AnimalTypeId} to type {AnimalTypeId}", animalId,
+            inAnimalDataDto.OldAnimalTypeId, inAnimalDataDto.NewAnimalTypeId);
         _context.SaveChanges();
         return animal.AnimalId;
     }
@@ -81,17 +88,20 @@ public class ChangeAnimalTypeAtAnimalService : IChangeAnimalTypeAtAnimalService
         
         animal.AnimalTypes.Remove(animal.AnimalTypes.Single(t => t.AnimalTypeId == animalTypeId));
         _context.SaveChanges();
+        _logger.LogInformation("Deleted animal type {AnimalTypeId} at animal {AnimalId}", animalTypeId, animalId);
         return animal.AnimalId;
     }
 
     private void CheckAnimalIdWithThrowException(long animalId)
     {
+        _logger.LogInformation("Checking if animal with id {AnimalId} to exists", animalId);
         _animalValidator.CheckWithThrowExceptions(new Animal { AnimalId = animalId },
             $"Animal {animalId} not found.");
     }
 
     private void CheckAnimalTypeIdWithThrowException(long animalTypeId)
     {
+        _logger.LogInformation("Checking if animal type with id {AnimalTypeId} to exists", animalTypeId);
         _animalTypeValidator.CheckWithThrowExceptions(new AnimalType { AnimalTypeId = animalTypeId },
             $"AnimalType {animalTypeId} not found.");
     }

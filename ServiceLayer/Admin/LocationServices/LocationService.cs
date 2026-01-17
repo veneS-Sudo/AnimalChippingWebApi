@@ -2,6 +2,7 @@ using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Admin.LocationServices;
@@ -10,13 +11,15 @@ public class LocationService : ILocationService
 {
     private readonly AppDbContext _context;
     private readonly IGenericValidator<LocationPoint> _locationPointValidator;
+    private readonly ILogger<LocationService> _logger;
 
     public LocationService(
         AppDbContext context,
-        IGenericValidator<LocationPoint> locationPointValidator)
+        IGenericValidator<LocationPoint> locationPointValidator, ILogger<LocationService> logger)
     {
         _context = context;
         _locationPointValidator = locationPointValidator;
+        _logger = logger;
     }
 
     public LocationPointDto GetLocationPointById(long id)
@@ -26,6 +29,7 @@ public class LocationService : ILocationService
        var point = _context.Locations
            .AsNoTracking()
            .Single(point => point.LocationPointId == id);
+       _logger.LogInformation("Getting location by id {LocationId}", id);
        return point.ToDto();
     }
 
@@ -40,6 +44,7 @@ public class LocationService : ILocationService
                 $"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
         _context.Locations.Add(locationPoint);
         _context.SaveChanges();
+        _logger.LogInformation("Adding location point with id {LocationId} to database", locationPoint.LocationPointId);
         return locationPoint.LocationPointId;
     }
 
@@ -59,6 +64,8 @@ public class LocationService : ILocationService
         point.Latitude = locationPoint.Latitude;
         point.Longitude = locationPoint.Longitude;
         var result = _context.SaveChanges();
+        _logger.LogInformation("Updated location point with id {LocationId}; new data: {Longitude}, {Latitude}",
+            locationPoint.LocationPointId, locationPoint.Longitude, locationPoint.Latitude);
         return result > 0;
     }
 
@@ -77,11 +84,13 @@ public class LocationService : ILocationService
                 
         _context.Locations.Remove(point);
         var  result = _context.SaveChanges();
+        _logger.LogInformation("Deleted location point with id {LocationId}", id);
         return result > 0;
     }
 
     private void CheckLocationPointIdWithThrowException(long id)
     {
+        _logger.LogInformation("Checking location point with id {LocationId} to exists", id);
         _locationPointValidator.CheckWithThrowExceptions(new LocationPoint() { LocationPointId = id },
             $"Location point with id {id} not found");
     }

@@ -3,6 +3,7 @@ using DatabaseLayer.Models;
 using DatabaseLayer.QueryObjects;
 using DatabaseLayer.Validators;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using ServiceLayer.Admin.AccountServices.SearchPagination;
 using ServiceLayer.Exceptions;
 
@@ -12,13 +13,16 @@ public class AccountService : IAccountService
 {
    private readonly AppDbContext _context;
    private readonly IGenericValidator<Account> _accountValidator;
+   private readonly ILogger<AccountService> _logger;
 
    public AccountService(
       AppDbContext context,
-      IGenericValidator<Account> accountValidator)
+      IGenericValidator<Account> accountValidator,
+      ILogger<AccountService> logger)
    {
       _context = context;
       _accountValidator = accountValidator;
+      _logger = logger;
    }
 
    public AccountDto GetAccountById(int accountId)
@@ -28,6 +32,7 @@ public class AccountService : IAccountService
       var account = _context.Accounts
          .AsNoTracking()
          .Single(a => a.AccountId == accountId);
+      _logger.LogInformation("Get account by id: {AccountId}", accountId);
       return account.ToDto();
    }
 
@@ -39,6 +44,9 @@ public class AccountService : IAccountService
          .OrderBy(a => a.AccountId);
       
       filterOptions.SetupRest(query);
+
+      _logger.LogInformation("Get accounts by filter options: {FilterFirstName}, {FilterSecondName}, {FilterEmail}",
+         filterOptions.filterValues.FirstName, filterOptions.filterValues.LastName, filterOptions.filterValues.Email);
       
       return query.Page(filterOptions.PageNum-1, filterOptions.PageSize).Select(account => account.ToDto());
    }
@@ -63,6 +71,7 @@ public class AccountService : IAccountService
       account.Password = dto.Password;
       
       var result = _context.SaveChanges();
+      _logger.LogInformation("Update account by id: {AccountId}; new data: {Account}", accountId, account.ToString());
       return result > 0;
    }
 
@@ -77,11 +86,13 @@ public class AccountService : IAccountService
       
       _context.Accounts.Remove(account);
       var result = _context.SaveChanges();
+      _logger.LogInformation("Delete account by id: {AccountId}", accountId);
       return result > 0;
    }
 
    private void CheckIfAccountExists(int accountId)
    {
+      _logger.LogInformation("Checking account by id: {AccountId} to exists", accountId);
       _accountValidator.CheckWithThrowExceptions(new Account() {AccountId = accountId},
          $"Account with id {accountId} not found.");
    }

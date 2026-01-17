@@ -401,3 +401,4 @@ FodyWeavers.xsd
 
 Database/
 Migrations/
+Logs/

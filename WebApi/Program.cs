@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Security.Claims;
 using AnimalChippingWebApi.Authentication;
 using AnimalChippingWebApi.Middlewares;
-using AnimalChippingWebApi.Models;
 using AnimalChippingWebApi.Models.Account;
 using AnimalChippingWebApi.Models.Animal;
 using AnimalChippingWebApi.Models.Location;
@@ -17,14 +16,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Net.Http.Headers;
 using Microsoft.OpenApi.Models;
+using Serilog;
 using ServiceLayer;
-using ServiceLayer.Admin;
 using ServiceLayer.Admin.AccountServices;
 using ServiceLayer.Admin.AccountServices.SearchPagination;
 using ServiceLayer.Admin.AnimalServices;
 using ServiceLayer.Admin.AnimalServices.AnimalTypeAtAnimal;
 using ServiceLayer.Admin.AnimalServices.SearchPagination;
-using ServiceLayer.Admin.Generic;
 using ServiceLayer.Admin.Generic.SortFilter;
 using ServiceLayer.Admin.LocationServices;
 using ServiceLayer.Admin.TypeAnimalServices;
@@ -56,6 +54,10 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Logging.AddSerilog(new LoggerConfiguration().Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.Seq("http://localhost:5341")
+    .WriteTo.File("Logs/log.txt", rollingInterval: RollingInterval.Day).CreateLogger());
 builder.Services.AddProblemDetails();
 builder.Services.AddCoreServices();
 
@@ -83,6 +85,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<LoggingInvocation>();
 
 var groupWithValidationId = app.MapGroup("/")
     .AddEndpointFilterFactory(IdValidationFilterFactory.ValidateParameterIdFactory)
@@ -162,7 +166,7 @@ groupWithValidationId.MapDelete("/accounts/{accountId:int}", (int accountId,
 // ===========================================
 // animal endpoints
 // ===========================================
-groupWithValidationId.MapGet("/animals/{animalId:long}", (long animalId, 
+groupWithValidationId.MapGet("/animals/{animalId:long}", (long animalId,
     [FromServices] IAnimalService animalService) =>
 {
     var animal = animalService.GetAnimalById(animalId).ToDto();
@@ -205,15 +209,16 @@ groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] Animal
     }).WithParameterValidation()
     .AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
     .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
-app.MapPost("/animals", ([FromBody] CreateAnimalDto dto, [FromServices] IAnimalService animalService) =>
-    {
-        if (!Enum.TryParse<GenderType>(dto.Gender, true, out var _))
-            return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()),
-                statusCode: 400);
-        var animalId = animalService.AddNewAnimal(dto.ToAddAnimalDto());
-        var animal = animalService.GetAnimalById(animalId).ToDto();
-        return Results.Created($"/animals/{animalId}", animal);
-    }).RequireAuthorization().WithParameterValidation()
+app.MapPost("/animals",
+        ([FromBody] CreateAnimalDto dto, [FromServices] IAnimalService animalService) =>
+        {
+            if (!Enum.TryParse<GenderType>(dto.Gender, true, out var _))
+                return Results.Problem("Available gender: " + string.Join(", ", Enum.GetNames<GenderType>()),
+                    statusCode: 400);
+            var animalId = animalService.AddNewAnimal(dto.ToAddAnimalDto());
+            var animal = animalService.GetAnimalById(animalId).ToDto();
+            return Results.Created($"/animals/{animalId}", animal);
+        }).RequireAuthorization().WithParameterValidation()
     .AddEndpointFilter<BaseAnimalIndicatorFilter>()
     .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
     .AddEndpointFilter<AnimalTypesValidatorFilter>();
@@ -314,6 +319,7 @@ groupWithValidationId.MapDelete("/animals/types/{typeId:long}",
         return Results.NoContent();
     });
 
+
 // ===========================================
 // location endpoints
 // ===========================================
@@ -330,7 +336,7 @@ app.MapPost("/locations", ([FromBody] LocationCreateUpdateDto dto, [FromServices
     var location = locationService.GetLocationPointById(locationId);
     return Results.Created($"/locations/{locationId}", location);
 }).RequireAuthorization().WithParameterValidation();
-groupWithValidationId.MapPut("/location/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
+groupWithValidationId.MapPut("/locations/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
     [FromServices] ILocationService locationService) =>
 {
     var isUpdated = locationService.UpdateLocationPoint(new LocationPoint()
