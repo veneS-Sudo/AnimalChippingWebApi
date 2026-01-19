@@ -27,7 +27,7 @@ public class RegistrationEndpointTest : IClassFixture<CustomWebApplicationFactor
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         string firstName = "John", lastName = "Doe", email = "john.doe@example.com", password = "password";
         var registrationDto = new UserRegistrationDto()
@@ -59,7 +59,7 @@ public class RegistrationEndpointTest : IClassFixture<CustomWebApplicationFactor
     public async Task RegistrationAccount_ShouldReturn400BadRequest(string firstName, string lastName,
         string email, string password)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         var registrationDto = new UserRegistrationDto()
             { FirstName = firstName, Email = email, LastName = lastName, Password = password };
@@ -71,7 +71,7 @@ public class RegistrationEndpointTest : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task RegistrationAccount_ShouldReturn403Forbidden()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         string firstName = "John", lastName = "Doe", email = "test2@test.com", password = "123456789";
         var registrationDto = new UserRegistrationDto()
             { FirstName = firstName, Email = email, LastName = lastName, Password = password };
@@ -88,7 +88,7 @@ public class RegistrationEndpointTest : IClassFixture<CustomWebApplicationFactor
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         string firstName = "John", lastName = "Doe", email = "test2@test.com", password = "123456789";
         var registrationDto = new Account() { FirstName = firstName, Email = email, LastName = lastName, Password = password };

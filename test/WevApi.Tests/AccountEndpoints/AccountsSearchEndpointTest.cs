@@ -16,7 +16,7 @@ public class AccountsSearchEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task GetAccounts_ReturnsAccounts()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync("/accounts/search");
         var accounts = await response.Content.ReadFromJsonAsync<List<AccountDto>>();
@@ -31,7 +31,7 @@ public class AccountsSearchEndpointTest : IClassFixture<CustomWebApplicationFact
     [InlineData(10, -10)]
     public async Task GetAccountsWithInvalidSearchValues_ShouldReturn400BadRequest(int from, int size)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync($"/accounts/search?from={from}&size={size}");
         
@@ -41,7 +41,7 @@ public class AccountsSearchEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task GetAccountsWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         
         var response = await client.GetAsync("/accounts/search");

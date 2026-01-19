@@ -30,7 +30,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var accountId = 1;
 
         var response = await client.DeleteAsync($"/accounts/{accountId}");
@@ -47,7 +47,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
     [InlineData(-1000)]
     public async Task DeleteAccountWithInvalidId_ShouldReturn400BadRequest(int id)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.DeleteAsync($"/accounts/{id}");
         
@@ -60,7 +60,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
         using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         _dbContext.Animals.Add(new Animal()
         {
@@ -81,7 +81,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task DeleteAccountWithOutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null; 
         var response = await client.DeleteAsync("/accounts/1");
         
@@ -95,7 +95,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var account = new Account() {FirstName = "test", LastName = "test", Email = "test@example.com", Password = "password"};
         _dbContext.Accounts.Add(account);
         await _dbContext.SaveChangesAsync();
@@ -112,7 +112,7 @@ public class DeleteAccountEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task DeleteNotExistingAccount_ShouldReturn403Forbidden()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.DeleteAsync($"/accounts/{int.MaxValue}");
         

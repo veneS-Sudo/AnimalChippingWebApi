@@ -27,7 +27,7 @@ public class PutLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point = new LocationPoint() { Longitude = 1, Latitude = 1 };
         _dbContext.Locations.Add(point);
         await _dbContext.SaveChangesAsync();
@@ -56,7 +56,7 @@ public class PutLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     [InlineData(0, 0, -100)]
     public async Task PutLocationWithInvalidData_ShouldReturn400BadRequest(int latitude, int longitude, int id)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point = new LocationCreateUpdateDto() {Latitude = latitude, Longitude = longitude};
         
         var response = await client.PutAsJsonAsync($"/locations/{id}", point);
@@ -68,7 +68,7 @@ public class PutLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     public async Task PutLocationWithoutAuth_ShouldReturn401Unauthorized()
     {
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         var point = new LocationCreateUpdateDto() {Latitude = 1, Longitude = 1};
         
@@ -81,7 +81,7 @@ public class PutLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     public async Task PutNotExistingLocation_ShouldReturn404NotFound()
     {
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point = new LocationCreateUpdateDto() { Latitude = 10, Longitude = 10 };
         
         var response = await client.PutAsJsonAsync($"/locations/{int.MaxValue}", point);
@@ -96,7 +96,7 @@ public class PutLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point1 = new LocationPoint() { Longitude = 1, Latitude = 1 };
         var point2 = new LocationPoint() { Longitude = 10, Latitude = 10 };
         _dbContext.Locations.AddRange(point1, point2);

@@ -29,7 +29,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var dto = _dbContext.Accounts.FirstOrDefault(x => x.AccountId == 1);
         var updateDto = new UserUpdateDto() {Email = "newemail@mail.com", Password = "123456789", FirstName = "test", LastName = "test"};
         
@@ -61,7 +61,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     public async Task PutAccountWithInvalidData_ShouldReturn404BadRequest(string email, string firstName,
         string lastName, string password)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var dto = await client.GetFromJsonAsync<AccountDto>("/accounts/1");
         var updateDto = new UserUpdateDto() {Email = email, Password = password, FirstName = firstName, LastName = lastName};
         
@@ -73,7 +73,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutAccountWithoutAuth_ShouldReturn401Forbidden()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         var updateDto = new UserUpdateDto() {Email = "test@mail.com", Password = "password", FirstName = "test", LastName = "test"};
         
@@ -89,7 +89,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var account = new Account() {FirstName = "test", LastName = "test", Email = "test@example.com", Password = "password"};
         _dbContext.Accounts.Add(account);
         await _dbContext.SaveChangesAsync();
@@ -107,7 +107,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task PutNotExistingAccount_ShouldReturn403Forbidden()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var updateAccount = new UpdateAccountDto() {Email = "test@test.com", Password = "password", FirstName = "test", LastName = "test"};
         
         var response = await client.PutAsJsonAsync($"/accounts/{int.MaxValue}", updateAccount);
@@ -122,7 +122,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var account = new Account() {FirstName = "test", LastName = "test", Email = "test@example.com", Password = "password"};
         _dbContext.Accounts.Add(account);
         await _dbContext.SaveChangesAsync();
@@ -142,7 +142,7 @@ public class PutAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [InlineData(-1000)]
     public async Task PutAccountWithInvalidId_ShouldReturn400BadRequest(int invalidId)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var updateAccount = new UpdateAccountDto() {Email = "example@example.com", Password = "password", FirstName = "test", LastName = "test"};
         
         var response = await client.PutAsJsonAsync($"/accounts/{invalidId}", updateAccount);

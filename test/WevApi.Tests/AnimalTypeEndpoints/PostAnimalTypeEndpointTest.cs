@@ -22,11 +22,11 @@ public class PostAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task PostAnimalType_ShouldCreateAnimalType()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var dto = new CreateUpdateAnimalTypeDto() { Type = "Bird" };
 
         var response = await client.PostAsJsonAsync("/animals/types", dto);
@@ -48,7 +48,7 @@ public class PostAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFact
     [InlineData("     ")]
     public async Task PostAnimalTypeWithInvalidType_ShouldReturn400BadRequest(string type)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.PostAsJsonAsync("/animals/types", new { Type = type });
 
@@ -58,7 +58,7 @@ public class PostAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task PostAnimalTypeWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
 
         var response = await client.PostAsJsonAsync("/animals/types", new { Type = "Bird" });
@@ -69,11 +69,11 @@ public class PostAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task PostSameAnimalTypeTwice_ShouldReturn409Conflict()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var dto = new CreateUpdateAnimalTypeDto() { Type = "Bird" };
 
         var response = await client.PostAsJsonAsync("/animals/types", dto);

@@ -24,7 +24,7 @@ public class DeleteLocationEndpointTest : IClassFixture<CustomWebApplicationFact
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point = new LocationPoint() { Latitude = 1, Longitude = -1 };
         _dbContext.Locations.Add(point);
         await _dbContext.SaveChangesAsync();
@@ -44,7 +44,7 @@ public class DeleteLocationEndpointTest : IClassFixture<CustomWebApplicationFact
     [InlineData(-1000)]
     public async Task DeleteLocationWithInvalidId_ShouldReturn400BadRequest(int id)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.DeleteAsync($"/locations/{id}");
         
@@ -59,7 +59,7 @@ public class DeleteLocationEndpointTest : IClassFixture<CustomWebApplicationFact
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var point = new LocationPoint() { Latitude = 1, Longitude = -1 };
         var animal = new Animal()
             { ChippingLocationPoint = point, AnimalTypes = new List<AnimalType>(), AccountId = 1 };
@@ -79,7 +79,7 @@ public class DeleteLocationEndpointTest : IClassFixture<CustomWebApplicationFact
     [Fact]
     public async Task DeleteLocationWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         
         var response = await client.DeleteAsync("/locations/1");
@@ -91,7 +91,7 @@ public class DeleteLocationEndpointTest : IClassFixture<CustomWebApplicationFact
     public async Task DeleteNotExistingLocation_ShouldReturn404NotFound()
     {
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.DeleteAsync($"/locations/{int.MaxValue}");
         

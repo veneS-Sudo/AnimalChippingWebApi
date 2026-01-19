@@ -16,7 +16,7 @@ public class GetAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetAccount_ReturnsAccount()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var response = await client.GetAsync("/accounts/1");
 
         var account = response.Content.ReadFromJsonAsync<AccountDto>();
@@ -29,7 +29,7 @@ public class GetAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [InlineData(0)]
     public async Task GetAccount_ShouldThrow400BadRequest(int id)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var response = await client.GetAsync($"/accounts/{id}");
         
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
@@ -39,7 +39,7 @@ public class GetAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     public async Task GetAccountWithoutAuth_ShouldThrow401Unauthorized()
     {
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         var response = await client.GetAsync($"/accounts/1");
         
@@ -49,7 +49,7 @@ public class GetAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
     [Fact]
     public async Task GetAccountWithNotExistsAccountId_ShouldThrow404NotFound()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var response = await client.GetAsync($"/accounts/{int.MaxValue}");
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);

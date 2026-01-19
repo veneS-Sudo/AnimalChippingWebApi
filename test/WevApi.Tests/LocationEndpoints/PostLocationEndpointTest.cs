@@ -26,7 +26,7 @@ public class PostLocationEndpointTest : IClassFixture<CustomWebApplicationFactor
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var location = new LocationCreateUpdateDto() {Longitude = 1, Latitude = 1};
         
         var response = await client.PostAsJsonAsync("/locations", location);
@@ -51,7 +51,7 @@ public class PostLocationEndpointTest : IClassFixture<CustomWebApplicationFactor
     [InlineData(1000, 1000)]
     public async Task PostLocationWithInvalidData_ShouldReturn400BadRequest(int latitude, int longitude)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var location = new LocationCreateUpdateDto() {Longitude = longitude, Latitude = latitude};
         
         var response = await client.PostAsJsonAsync("/locations", location);
@@ -62,7 +62,7 @@ public class PostLocationEndpointTest : IClassFixture<CustomWebApplicationFactor
     [Fact]
     public async Task PostLocationWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         var location = new LocationCreateUpdateDto() {Longitude = 1, Latitude = 1};
         
@@ -78,7 +78,7 @@ public class PostLocationEndpointTest : IClassFixture<CustomWebApplicationFactor
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var location = new LocationCreateUpdateDto() {Longitude = 1, Latitude = 1};
         
         var response = await client.PostAsJsonAsync("/locations", location);

@@ -27,7 +27,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var animalType = new AnimalType() {Type = "Bird"};
         var newAnimal = new CreateUpdateAnimalTypeDto() {Type = "Shark"};
         await _dbContext.AnimalTypes.AddAsync(animalType);
@@ -52,14 +52,14 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [InlineData("     ")]
     public async Task PutAnimalTypeWithInvalidType_ShouldReturn400BadRequest(string? type)
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
         var at = new AnimalType() { Type = "Bird" };
         _dbContext.AnimalTypes.Add(at);
         await _dbContext.SaveChangesAsync();
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.PutAsJsonAsync($"/animals/types/{at.AnimalTypeId}",
             new CreateUpdateAnimalTypeDto() { Type = type });
@@ -77,7 +77,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [InlineData(int.MinValue)]
     public async Task PutAnimalTypeWithInvalidId_ShouldReturn400BadRequest(int? id)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.PutAsJsonAsync($"/animals/types/{id}",
             new CreateUpdateAnimalTypeDto() { Type = "Shark" });
@@ -88,7 +88,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutAnimalTypeWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
 
         var response = await client.PutAsJsonAsync("/animals/types/1",
@@ -100,7 +100,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutNotExistingAnimalType_ShouldReturn404NotFound()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.PutAsJsonAsync($"/animals/types/{int.MaxValue}",
             new CreateUpdateAnimalTypeDto() { Type = "Shark" });
@@ -111,7 +111,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task PutExistingAnimalType_ShouldReturn409Conflict()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
@@ -119,7 +119,7 @@ public class PutAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
         var secondType = new AnimalType() { Type = "Shark" };
         _dbContext.AnimalTypes.AddRange(firstType, secondType);
         await _dbContext.SaveChangesAsync();
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.PutAsJsonAsync($"/animals/types/{secondType.AnimalTypeId}",
             new CreateUpdateAnimalTypeDto() { Type = "Bird" });

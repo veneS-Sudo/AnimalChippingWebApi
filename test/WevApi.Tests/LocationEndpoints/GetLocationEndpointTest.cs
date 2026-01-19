@@ -26,7 +26,7 @@ public class GetLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var location = new LocationPoint() {Latitude = 1, Longitude = 1};
         _dbContext.Locations.Add(location);
         await _dbContext.SaveChangesAsync();
@@ -51,7 +51,7 @@ public class GetLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     [InlineData(int.MinValue)]
     public async Task GetLocationWithInvalidId_ShouldReturn400BadRequest(int invalidId)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync($"/locations/{invalidId}");
         
@@ -61,7 +61,7 @@ public class GetLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     [Fact]
     public async Task GetLocationWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         
         var response = await client.GetAsync("/locations/1");
@@ -73,7 +73,7 @@ public class GetLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     public async Task GetNotExistingLocation_ShouldReturn404NotFound()
     {
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync("/locations/100000");
         

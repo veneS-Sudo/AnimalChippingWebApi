@@ -22,11 +22,11 @@ public class GetAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task GetAnimalType_ShouldReturnsAnimalType()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         var animalType = new AnimalType() {Type = "Bird"};
         _dbContext.AnimalTypes.Add(animalType);
         await _dbContext.SaveChangesAsync();
@@ -50,7 +50,7 @@ public class GetAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [InlineData(int.MinValue)]
     public async Task GetAnimalTypeWithInvalidId_ShouldReturn400BadRequest(int animalTypeId)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync($"/animals/types/{animalTypeId}");
         
@@ -60,7 +60,7 @@ public class GetAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [Fact]
     public async Task GetAnimalTypeWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         
         var response = await client.GetAsync($"/animals/types/1");
@@ -74,7 +74,7 @@ public class GetAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFacto
     [InlineData(int.MaxValue)]
     public async Task GetNotExistingAnimalType_ShouldReturn404NotFound(int animalTypeId)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.GetAsync($"/animals/types/{animalTypeId}");
         

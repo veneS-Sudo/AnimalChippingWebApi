@@ -21,14 +21,14 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task DeleteAnimalType_ShouldDeleteAnimalType()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
         var animalType = new AnimalType() {Type = "Bird"};
         _dbContext.AnimalTypes.Add(animalType);
         await _dbContext.SaveChangesAsync();
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.DeleteAsync($"/animals/types/{animalType.AnimalTypeId}");
         response.EnsureSuccessStatusCode();
@@ -48,7 +48,7 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
     [InlineData(int.MinValue)]
     public async Task DeleteAnimalTypeWithInvalidId_ShouldReturn400BadRequest(int animalTypeId)
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.DeleteAsync($"/animals/types/{animalTypeId}");
         
@@ -58,7 +58,7 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task DeleteAnimalTypeBindingToAnimal_ShouldReturn400BadRequest()
     {
-        var scope = _fixture.Services.CreateScope();
+        using var scope = _fixture.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         _transaction = await _dbContext.Database.BeginTransactionAsync();
         
@@ -71,7 +71,7 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
         };
         _dbContext.Animals.Add(animal);
         await _dbContext.SaveChangesAsync();
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
 
         var response = await client.DeleteAsync($"/animals/types/{animalType.AnimalTypeId}");
         
@@ -85,7 +85,7 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task DeleteAnimalTypeWithoutAuth_ShouldReturn401Unauthorized()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         client.DefaultRequestHeaders.Authorization = null;
         
         var response = await client.DeleteAsync("/animals/types/1");
@@ -96,7 +96,7 @@ public class DeleteAnimalTypeEndpointTest : IClassFixture<CustomWebApplicationFa
     [Fact]
     public async Task DeleteNotExistingAnimalType_ShouldReturn404NotFound()
     {
-        var client = _fixture.CreateClient();
+        using var client = _fixture.CreateClient();
         
         var response = await client.DeleteAsync($"/animals/types/{int.MaxValue}");
         
