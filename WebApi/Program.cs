@@ -1,13 +1,13 @@
 using System.Globalization;
 using System.Security.Claims;
 using AnimalChippingWebApi.Authentication;
-using AnimalChippingWebApi.DataBaseLayer.Context;
 using AnimalChippingWebApi.Middlewares;
 using AnimalChippingWebApi.Models;
 using AnimalChippingWebApi.Models.Animal;
 using AnimalChippingWebApi.Models.Location;
 using AnimalChippingWebApi.Models.VisitedLocation;
 using AnimalChippingWebApi.ValidationFilters;
+using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
@@ -184,7 +184,7 @@ groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] Animal
             FilterValues = new AnimalSearchFilterValues()
             {
                 ChipperId = animalSearchDto.ChipperId,
-                ChippingLocationId = animalSearchDto.ChipperLocationId,
+                ChippingLocationId = animalSearchDto.ChippingLocationId,
                 Gender = animalSearchDto.Gender is not null ? genderParsed : null,
                 LiveStatus = animalSearchDto.LifeStatus is not null ? lifeStatusParsed : null,
                 StartDate = animalSearchDto.StartDateTime is not null ? startDateTimeParsed : null,
@@ -322,7 +322,7 @@ app.MapPost("/locations", ([FromBody] LocationCreateUpdateDto dto, [FromServices
     var location = locationService.GetLocationPointById(locationId);
     return Results.Created($"/locations/{locationId}", location);
 }).RequireAuthorization().WithParameterValidation();
-groupWithValidationId.MapPut("/location/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
+groupWithValidationId.MapPut("/locations/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
     [FromServices] ILocationService locationService) =>
 {
     var isUpdated = locationService.UpdateLocationPoint(new LocationPoint()
@@ -390,7 +390,7 @@ groupWithValidationId.MapPost("/animals/{animalId:long}/locations/{pointId:long}
         addedVisitedLocation);
 });
 groupWithValidationId.MapPut("/animals/{animalId:long}/locations",
-    (long animalId, UpdateVisitedLocationDto visitedLocationDto,
+    (long animalId, [FromBody] UpdateVisitedLocationDto visitedLocationDto,
         [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
     {
         var isUpdated = visitedLocationService.UpdateVisitedLocationToAnimal(animalId, visitedLocationDto);
