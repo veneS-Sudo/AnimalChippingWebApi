@@ -196,7 +196,7 @@ groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] Animal
             FilterValues = new AnimalSearchFilterValues()
             {
                 ChipperId = animalSearchDto.ChipperId,
-                ChippingLocationId = animalSearchDto.ChipperLocationId,
+                ChippingLocationId = animalSearchDto.ChippingLocationId,
                 Gender = animalSearchDto.Gender is not null ? genderParsed : null,
                 LiveStatus = animalSearchDto.LifeStatus is not null ? lifeStatusParsed : null,
                 StartDate = animalSearchDto.StartDateTime is not null ? startDateTimeParsed : null,
@@ -404,7 +404,7 @@ groupWithValidationId.MapPost("/animals/{animalId:long}/locations/{pointId:long}
         addedVisitedLocation);
 });
 groupWithValidationId.MapPut("/animals/{animalId:long}/locations",
-    (long animalId, UpdateVisitedLocationDto visitedLocationDto,
+    (long animalId, [FromBody] UpdateVisitedLocationDto visitedLocationDto,
         [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
     {
         var isUpdated = visitedLocationService.UpdateVisitedLocationToAnimal(animalId, visitedLocationDto);
@@ -430,3 +430,5 @@ groupWithValidationId.MapDelete("/animals/{animalId:long}/locations/{visitedLoca
     return Results.NoContent();
 });
 app.Run();
+
+public partial class Program {}
