@@ -1,14 +1,8 @@
 using System.Net;
-using System.Net.Http.Json;
-using AnimalChippingWebApi.Models.Animal;
-using AnimalChippingWebApi.Models.Location;
 using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Admin.AccountServices;
-using ServiceLayer.Admin.Dto;
-using ServiceLayer.Registration;
 
 namespace WevApi.Tests.AccountEndpoints;
 

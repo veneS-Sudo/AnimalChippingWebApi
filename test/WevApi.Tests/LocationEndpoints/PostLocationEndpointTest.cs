@@ -4,7 +4,7 @@ using AnimalChippingWebApi.Models.Location;
 using DatabaseLayer.Context;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Admin.AnimalServices.LocationServices;
+using ServiceLayer.Admin.LocationServices;
 
 namespace WevApi.Tests.LocationEndpoints;
 

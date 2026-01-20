@@ -3,9 +3,10 @@ using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Admin.AnimalServices.LocationServices;
-using ServiceLayer.Registration.Exceptions;
+using ServiceLayer.Admin.LocationServices;
+using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Tests;
 
@@ -97,7 +98,8 @@ public class LocationServiceTests
     private ILocationService SetupService(AppDbContext context)
     {
         var validatorMock = new Mock<IGenericValidator<LocationPoint>>();
-        var service = new LocationService(context, validatorMock.Object);
+        var loggerMock = new Mock<ILogger<LocationService>>();
+            var service = new LocationService(context, validatorMock.Object, loggerMock.Object);
         return service;
     }
 }

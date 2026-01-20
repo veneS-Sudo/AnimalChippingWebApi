@@ -3,7 +3,6 @@ using System.Net.Http.Json;
 using DatabaseLayer.Context;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Admin.Dto;
 using ServiceLayer.Admin.TypeAnimalServices;
 
 namespace WevApi.Tests.AnimalTypeEndpoints;

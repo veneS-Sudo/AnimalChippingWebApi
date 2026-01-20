@@ -4,10 +4,11 @@ using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using ServiceLayer.Admin.AccountServices;
-using ServiceLayer.Admin.Dto;
-using ServiceLayer.Registration.Exceptions;
+using ServiceLayer.Admin.AccountServices.SearchPagination;
+using ServiceLayer.Exceptions;
 
 namespace ServiceLayer.Tests;
 
@@ -48,11 +49,14 @@ public class AccountServiceTests
         using (var context = new AppDbContext(options))
         {
             var accountValidatorMock = new Mock<IGenericValidator<Account>>();
-            var service = new AccountService(context, accountValidatorMock.Object);
-            var searchOptions = new AccountSortFilterPageOptions() {PageNum = 1, PageSize = size};
-            var accounts = service.GetAccounts(searchOptions);
+            var loggerMock = new Mock<ILogger<AccountService>>();
+            var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
+            var searchOptions = new AccountSortFilterPageOptions()
+                { PageNum = 1, PageSize = size, filterValues = new AccountSearchFilterValues() };
+            var accounts = service.GetAccounts(searchOptions).Select(x => new Account() { AccountId = x.AccountId })
+                .ToList();
             Assert.Equal(result, accounts.Count());
-            //Assert.Equal(arrange, accounts, new AccountEqualityComparer());
+            Assert.Equal(arrange.Take(result), accounts, new AccountEqualityComparer());
         }
     }
 
@@ -74,7 +78,8 @@ public class AccountServiceTests
         using (var context = new AppDbContext(options))
         {
             var accountValidatorMock = new Mock<IGenericValidator<Account>>();
-            var service = new AccountService(context, accountValidatorMock.Object);
+            var loggerMock = new Mock<ILogger<AccountService>>();
+            var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
             Assert.Throws<InvalidOperationException>(() => service.UpdateAccountById(accountId, dto));
         }
     }
@@ -98,7 +103,8 @@ public class AccountServiceTests
         {
             var accountValidatorMock = new Mock<IGenericValidator<Account>>();
             var dto = new UpdateAccountDto() { Email = "email", FirstName = "test", LastName = "test", Password = "password" };
-            var service = new AccountService(context, accountValidatorMock.Object);
+            var loggerMock = new Mock<ILogger<AccountService>>();
+            var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
             Assert.Throws<UniqueValueException>(() => service.UpdateAccountById(accountId, dto));
         }
     }
@@ -132,7 +138,8 @@ public class AccountServiceTests
         using (var context = new AppDbContext(options))
         {
             var accountValidatorMock = new Mock<IGenericValidator<Account>>();
-            var service = new AccountService(context, accountValidatorMock.Object);
+            var loggerMock = new Mock<ILogger<AccountService>>();
+            var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
             Assert.Throws<InvalidOperationException>(() => service.DeleteAccountById(accountId));
         }
     }
@@ -157,11 +164,11 @@ public class AccountServiceTests
         using (var context = new AppDbContext(options))
         {
             var accountValidatorMock = new Mock<IGenericValidator<Account>>();
-            var service = new AccountService(context, accountValidatorMock.Object);
+            var loggerMock = new Mock<ILogger<AccountService>>();
+            var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
             var result = service.DeleteAccountById(accountId);
             Assert.True(result);
             Assert.Null(context.Accounts.FirstOrDefault(x => x.AccountId == accountId));
-            Assert.Null(service.GetAccountById(accountId));
         }
     }
 

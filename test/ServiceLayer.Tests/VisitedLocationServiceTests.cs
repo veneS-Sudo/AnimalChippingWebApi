@@ -4,10 +4,10 @@ using DatabaseLayer.Validators;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Admin;
-using ServiceLayer.Admin.Dto;
 using ServiceLayer.Admin.VisitedLocationServices;
+using ServiceLayer.Admin.VisitedLocationServices.SearchPagination;
 
 namespace ServiceLayer.Tests;
 
@@ -216,8 +216,9 @@ public class VisitedLocationServiceTests
         var animalValidatorMock = new Mock<IGenericValidator<Animal>>();
         var locationPointValidatorMock = new Mock<IGenericValidator<LocationPoint>>();
         var visitedLocationValidatorMock = new Mock<IGenericValidator<AnimalVisitedLocation>>();
+        var loggerMock = new Mock<ILogger<VisitedLocationAnimalService>>();
         var service = new VisitedLocationAnimalService(context, animalValidatorMock.Object,
-            locationPointValidatorMock.Object, visitedLocationValidatorMock.Object);
+            locationPointValidatorMock.Object, visitedLocationValidatorMock.Object, loggerMock.Object);
         return service;
     }
 }

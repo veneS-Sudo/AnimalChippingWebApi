@@ -2,11 +2,11 @@ using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Admin;
 using ServiceLayer.Admin.AnimalServices;
-using ServiceLayer.Admin.Dto;
-using ServiceLayer.Registration.Exceptions;
+using ServiceLayer.Admin.AnimalServices.SearchPagination;
+using ServiceLayer.Exceptions;
 using AnimalVisitedLocation = DatabaseLayer.Models.AnimalVisitedLocation;
 using AppDbContext = DatabaseLayer.Context.AppDbContext;
 
@@ -55,7 +55,8 @@ public class AnimalServiceTests
         using (var context = new AppDbContext(options))
         {
             var service = SetupService(context);
-            var searchOptions = new AnimalSortFilterPageOptions() {PageNum = 1, PageSize = size};
+            var searchOptions = new AnimalSortFilterPageOptions()
+                { PageNum = 1, PageSize = size, FilterValues = new AnimalSearchFilterValues() };
             var animals = service.GetAnimals(searchOptions);
             Assert.Equal(result, animals.Count());
             Assert.Equal(arrange.Take(result), animals, new AnimalEqualityComparer());
@@ -142,8 +143,9 @@ public class AnimalServiceTests
         var accountValidatorMock = new Mock<IGenericValidator<Account>>();
         var animalValidatorMock = new Mock<IGenericValidator<Animal>>();
         var pointValidatorMock = new Mock<IGenericValidator<LocationPoint>>();
+        var loggerMock = new Mock<ILogger<AnimalService>>();
         var service = new AnimalService(context, animalValidatorMock.Object, pointValidatorMock.Object,
-            accountValidatorMock.Object);
+            accountValidatorMock.Object, loggerMock.Object);
         return service;
     }
 

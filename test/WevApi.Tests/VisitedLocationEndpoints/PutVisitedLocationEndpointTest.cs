@@ -5,7 +5,7 @@ using DatabaseLayer.Context;
 using DatabaseLayer.Models;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.VisitedLocationServices;
 
 namespace WevApi.Tests.VisitedLocationEndpoints;
 

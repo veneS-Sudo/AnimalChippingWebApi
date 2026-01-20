@@ -3,9 +3,9 @@ using DatabaseLayer.Models;
 using DatabaseLayer.Validators;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
-using ServiceLayer.Admin;
-using ServiceLayer.Admin.Dto;
+using ServiceLayer.Admin.AnimalServices.AnimalTypeAtAnimal;
 
 namespace ServiceLayer.Tests;
 
@@ -67,7 +67,9 @@ public class ChangeAnimalTypeServiceTests
     {
         var animalValidatorMock = new Mock<IGenericValidator<Animal>>();
         var animalTypeValidatorMock = new Mock<IGenericValidator<AnimalType>>();
-        var service = new ChangeAnimalTypeAtAnimalService(context, animalValidatorMock.Object, animalTypeValidatorMock.Object);
+        var loggerMock = new Mock<ILogger<ChangeAnimalTypeAtAnimalService>>();
+        var service = new ChangeAnimalTypeAtAnimalService(context, animalValidatorMock.Object,
+            animalTypeValidatorMock.Object, loggerMock.Object);
         return service;
     }
 }
