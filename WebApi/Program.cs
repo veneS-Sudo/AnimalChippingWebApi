@@ -104,7 +104,12 @@ groupWithValidationId.MapGet("/accounts/{accountId:int}", (int accountId,
 {
     var account = accountService.GetAccountById(accountId);
     return TypedResults.Ok(account);
-});
+}).WithTags("Account")
+.Produces<AccountDto>()
+.ProducesProblem(404)
+.ProducesProblem(401)
+.ProducesValidationProblem();
+
 groupWithValidationSearchParams.MapGet("/accounts/search", ([AsParameters] AccountSearchDto accountSearchDto,
     [FromServices] IAccountService accountService) =>
 {
@@ -122,7 +127,12 @@ groupWithValidationSearchParams.MapGet("/accounts/search", ([AsParameters] Accou
     var result = accountService.GetAccounts(searchOptions)
         .Skip((accountSearchDto.From % accountSearchDto.Size) ?? 0).ToList();
     return TypedResults.Ok(result);
-}).WithParameterValidation();
+}).WithParameterValidation()
+.WithTags("Account")
+.Produces<List<AccountDto>>()
+.ProducesProblem(401)
+.ProducesValidationProblem();
+
 app.MapPost("/registration",
     ([FromBody] UserRegistrationDto dto, ClaimsPrincipal user,
         [FromServices] IRegistrationUserService registrationService, [FromServices] IAccountService accountService) => 
@@ -134,7 +144,13 @@ app.MapPost("/registration",
         var accountId = registrationService.RegistrationUser(dto);
         var account = accountService.GetAccountById(accountId);
         return Results.Created($"/accounts/{accountId}", account);
-    }).WithParameterValidation();
+    }).WithParameterValidation()
+    .WithTags("Account")
+    .Produces<AccountDto>(201)
+    .ProducesProblem(403)
+    .ProducesProblem(409)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/accounts/{accountId:int}", (int accountId, 
     [FromBody] UserUpdateDto dto, [FromServices] IAccountService accountService) =>
 {
@@ -152,7 +168,14 @@ groupWithValidationId.MapPut("/accounts/{accountId:int}", (int accountId,
     }
     return Results.NoContent();
 }).WithParameterValidation()
-.AddEndpointFilter<OwnedAccountValidationFilter>();
+.AddEndpointFilter<OwnedAccountValidationFilter>()
+.WithTags("Account")
+.Produces<AccountDto>()
+.ProducesProblem(401)
+.ProducesProblem(403)
+.ProducesProblem(409)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/accounts/{accountId:int}", (int accountId, 
     [FromServices] IAccountService accountService) =>
 {
@@ -160,7 +183,13 @@ groupWithValidationId.MapDelete("/accounts/{accountId:int}", (int accountId,
     if (isDeleted)
         return Results.Ok();
     return Results.NoContent();
-}).AddEndpointFilter<OwnedAccountValidationFilter>();
+}).AddEndpointFilter<OwnedAccountValidationFilter>()
+.WithTags("Account")
+.Produces(200)
+.ProducesProblem(401)
+.ProducesProblem(403)
+.ProducesValidationProblem();
+
 
 
 // ===========================================
@@ -171,7 +200,12 @@ groupWithValidationId.MapGet("/animals/{animalId:long}", (long animalId,
 {
     var animal = animalService.GetAnimalById(animalId).ToDto();
     return TypedResults.Ok(animal);
-});
+}).WithTags("Animal")
+.Produces<AnimalDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] AnimalSearchDto animalSearchDto,
         [FromServices] IAnimalService animalService) =>
     {
@@ -208,7 +242,12 @@ groupWithValidationSearchParams.MapGet("/animals/search", ([AsParameters] Animal
         return TypedResults.Ok(result);
     }).WithParameterValidation()
     .AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
-    .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+    .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+    .WithTags("Animal")
+    .Produces<List<AnimalDto>>()
+    .ProducesProblem(401)
+    .ProducesValidationProblem();
+
 app.MapPost("/animals",
         ([FromBody] CreateAnimalDto dto, [FromServices] IAnimalService animalService) =>
         {
@@ -221,7 +260,14 @@ app.MapPost("/animals",
         }).RequireAuthorization().WithParameterValidation()
     .AddEndpointFilter<BaseAnimalIndicatorFilter>()
     .AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
-    .AddEndpointFilter<AnimalTypesValidatorFilter>();
+    .AddEndpointFilter<AnimalTypesValidatorFilter>()
+    .WithTags("Animal")
+    .Produces<AnimalDto>(201)
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesProblem(409)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/animals/{animalId:long}", ([FromBody] UpdateAnimalDto dto, long animalId, 
     [FromServices] IAnimalService animalService) =>
     {
@@ -240,7 +286,13 @@ groupWithValidationId.MapPut("/animals/{animalId:long}", ([FromBody] UpdateAnima
         return Results.NoContent();
     }).WithParameterValidation()
 .AddEndpointFilter<BaseAnimalIndicatorFilter>()
-.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+    .WithTags("Animal")
+    .Produces<AnimalDto>()
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/animals/{animalId:long}",
     (long animalId, [FromServices] IAnimalService animalService) =>
     {
@@ -251,7 +303,12 @@ groupWithValidationId.MapDelete("/animals/{animalId:long}",
         }
 
         return Results.NoContent();
-    });
+    }).WithTags("Animal")
+    .Produces(200)
+    .ProducesProblem(403)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapPost("/animals/{animalId:long}/types/{typeId:long}",
     (long animalId, long typeId, [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
         [FromServices] IAnimalService animalService) =>
@@ -259,7 +316,13 @@ groupWithValidationId.MapPost("/animals/{animalId:long}/types/{typeId:long}",
         var createdAnimalId = changeAnimalTypeService.AddAnimalTypeAtAnimal(animalId, typeId);
         var animal = animalService.GetAnimalById(createdAnimalId).ToDto();
         return Results.Created($"/animals/{createdAnimalId}", animal);
-    });
+    }).WithTags("Animal")
+    .Produces<AnimalDto>(201)
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesProblem(409)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/animals/{animalId:long}/types",
     (long animalId, [FromBody] UpdateAnimalTypeInAnimalDataDto dto,
         [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
@@ -269,7 +332,14 @@ groupWithValidationId.MapPut("/animals/{animalId:long}/types",
         var updatedAnimal = animalService.GetAnimalById(updatedAnimalId).ToDto();
         return TypedResults.Ok(updatedAnimal);
     }).WithParameterValidation().
-    AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+    AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+    .WithTags("Animal")
+    .Produces<AnimalDto>()
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesProblem(409)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/animals/{animalId:long}/types/{typeId:long}",
     (long animalId, long typeId, [FromServices] IChangeAnimalTypeAtAnimalService changeAnimalTypeService,
         [FromServices] IAnimalService animalService) =>
@@ -277,7 +347,12 @@ groupWithValidationId.MapDelete("/animals/{animalId:long}/types/{typeId:long}",
         var changedAnimalId = changeAnimalTypeService.DeleteAnimalTypeAtAnimal(animalId, typeId);
         var animal = animalService.GetAnimalById(changedAnimalId).ToDto();
         return TypedResults.Ok(animal);
-    });
+    }).WithTags("Animal")
+    .Produces(200)
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 
 
 // ===========================================
@@ -288,14 +363,25 @@ groupWithValidationId.MapGet("/animals/types/{typeId:long}", (long typeId,
 {
     var typeAnimal = typeAnimalService.GetAnimalTypeById(typeId);
     return Results.Ok(typeAnimal);
-});
+}).WithTags("Animal type")
+.Produces<AnimalTypeDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 app.MapPost("/animals/types",
     ([FromBody] CreateUpdateAnimalTypeDto dto, [FromServices] ITypeAnimalService typeAnimalService) =>
     {
         var typeId = typeAnimalService.AddAnimalType(dto);
         var animalType = typeAnimalService.GetAnimalTypeById(typeId);
         return Results.Created($"/animals/types/{typeId}", animalType);
-    }).RequireAuthorization().WithParameterValidation();
+    }).RequireAuthorization().WithParameterValidation()
+    .WithTags("Animal type")
+    .Produces<AnimalTypeDto>(201)
+    .ProducesProblem(401)
+    .ProducesProblem(409)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/animals/types/{typeId:long}", (long typeId, [FromBody] CreateUpdateAnimalTypeDto dto,
     [FromServices] ITypeAnimalService typeAnimalService) =>
 {
@@ -306,7 +392,14 @@ groupWithValidationId.MapPut("/animals/types/{typeId:long}", (long typeId, [From
         return TypedResults.Ok(animalType);
     }
     return Results.NoContent();
-}).WithParameterValidation();
+}).WithParameterValidation()
+.WithTags("Animal type")
+.Produces<AnimalTypeDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesProblem(409)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/animals/types/{typeId:long}",
     (long typeId, [FromServices] ITypeAnimalService typeAnimalService) =>
     {
@@ -317,7 +410,12 @@ groupWithValidationId.MapDelete("/animals/types/{typeId:long}",
         }
 
         return Results.NoContent();
-    });
+    }).WithTags("Animal type")
+    .Produces(200)
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 
 
 // ===========================================
@@ -328,14 +426,25 @@ groupWithValidationId.MapGet("/locations/{pointId:long}", (long pointId,
 {
     var location = locationService.GetLocationPointById(pointId);
     return Results.Ok(location);
-});
+}).WithTags("Location")
+.Produces<LocationPointDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 app.MapPost("/locations", ([FromBody] LocationCreateUpdateDto dto, [FromServices] ILocationService locationService) =>
 {
     var locationId = locationService.AddLocationPoint(new LocationPoint()
         { Longitude = dto.Longitude, Latitude = dto.Latitude });
     var location = locationService.GetLocationPointById(locationId);
     return Results.Created($"/locations/{locationId}", location);
-}).RequireAuthorization().WithParameterValidation();
+}).RequireAuthorization().WithParameterValidation()
+.WithTags("Location")
+.Produces<LocationPointDto>(201)
+.ProducesProblem(401)
+.ProducesProblem(409)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/locations/{pointId:long}", (long pointId, [FromBody] LocationCreateUpdateDto dto,
     [FromServices] ILocationService locationService) =>
 {
@@ -347,7 +456,14 @@ groupWithValidationId.MapPut("/locations/{pointId:long}", (long pointId, [FromBo
         return TypedResults.Ok(location);
     }
     return Results.NoContent();
-}).WithParameterValidation();
+}).WithParameterValidation()
+.WithTags("Location")
+.Produces<LocationPointDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesProblem(409)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/locations/{pointId:long}",
     (long pointId, [FromServices] ILocationService locationService) =>
     {
@@ -358,7 +474,12 @@ groupWithValidationId.MapDelete("/locations/{pointId:long}",
         }
 
         return Results.NoContent();
-    });
+    }).WithTags("Location")
+    .Produces(200)
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 
 
 // ===========================================
@@ -388,21 +509,37 @@ groupWithValidationSearchParams.MapGet("/animals/{animalId:long}/locations", ([A
         .Skip((visitedLocationSearchDto.From % visitedLocationSearchDto.Size) ?? 0).Select(vl => vl.ToDto()).ToList();
     return TypedResults.Ok(result);
 }).AddEndpointFilterFactory(SearchParamsValidationFilterFactory.ValidateSearchDateParamsFactory)
-.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+.AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+.WithTags("Visited location")
+.Produces<List<VisitedLocationDto>>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapGet("/animals/{animalId:long}/locations/{visitedLocationId}", (long animalId,
     long visitedLocationId,
     [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
 {
     var visitedLocation = visitedLocationService.GetAnimalVisitedLocationById(animalId, visitedLocationId).ToDto();
     return TypedResults.Ok(visitedLocation);
-});
+}).WithTags("Visited location")
+.Produces<VisitedLocationDto>()
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapPost("/animals/{animalId:long}/locations/{pointId:long}", (long animalId, long pointId,
     [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
 {
     var addedVisitedLocation = visitedLocationService.AddVisitedLocationToAnimal(animalId, pointId).ToDto();
     return Results.Created($"/animals/{animalId}/locations/{addedVisitedLocation.VisitedLocationId}",
         addedVisitedLocation);
-});
+}).WithTags("Visited location")
+.Produces<VisitedLocationDto>(201)
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
 groupWithValidationId.MapPut("/animals/{animalId:long}/locations",
     (long animalId, [FromBody] UpdateVisitedLocationDto visitedLocationDto,
         [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
@@ -416,7 +553,13 @@ groupWithValidationId.MapPut("/animals/{animalId:long}/locations",
         }
 
         return Results.NoContent();
-    }).AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory);
+    }).AddEndpointFilterFactory(IdValidationFilterFactory.ValidatePropertyIdFactory)
+    .WithTags("Visited location")
+    .Produces<VisitedLocationDto>()
+    .ProducesProblem(401)
+    .ProducesProblem(404)
+    .ProducesValidationProblem();
+
 groupWithValidationId.MapDelete("/animals/{animalId:long}/locations/{visitedLocationId:long}", (long animalId,
     long visitedLocationId,
     [FromServices] IVisitedLocationAnimalService visitedLocationService) =>
@@ -428,7 +571,14 @@ groupWithValidationId.MapDelete("/animals/{animalId:long}/locations/{visitedLoca
     }
 
     return Results.NoContent();
-});
+}).WithTags("Visited location")
+.Produces(200)
+.ProducesProblem(401)
+.ProducesProblem(404)
+.ProducesValidationProblem();
+
+
+
 app.Run();
 
 public partial class Program {}
