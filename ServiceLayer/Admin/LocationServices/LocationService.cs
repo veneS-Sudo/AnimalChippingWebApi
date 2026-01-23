@@ -38,8 +38,8 @@ public class LocationService : ILocationService
         if (_context.Locations
             .AsNoTracking()
             .Any(l =>
-                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
-                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.001))
+                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.00001
+                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.00001))
             throw new UniqueValueException(
                 $"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
         _context.Locations.Add(locationPoint);
@@ -54,8 +54,8 @@ public class LocationService : ILocationService
         if (_context.Locations
             .AsNoTracking()
             .Any(l =>
-                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.001
-                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.001))
+                Math.Abs(Math.Round(l.Latitude, 4) - Math.Round(locationPoint.Latitude, 4)) < 0.00001
+                && Math.Abs(Math.Round(l.Longitude, 4) - Math.Round(locationPoint.Longitude, 4)) < 0.00001))
             throw new UniqueValueException(
                 $"Location with latitude {locationPoint.Latitude} and longitude {locationPoint.Longitude} already exists");
         

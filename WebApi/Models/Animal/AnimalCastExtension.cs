@@ -1,3 +1,4 @@
+using System.Globalization;
 using DatabaseLayer.Models;
 using ServiceLayer.Admin.AnimalServices;
 
@@ -14,13 +15,13 @@ internal static class AnimalCastExtension
             Weight = animal.Weight,
             Height = animal.Height,
             Length = animal.Length,
-            Gender = animal.Gender.ToString(),
-            LiveStatus = animal.LiveStatus.ToString(),
-            ChippingDateTime = animal.ChippingDateTime.ToString("yyyy-MM-dd"),
+            Gender = animal.Gender.ToString().ToUpper(),
+            LiveStatus = animal.LiveStatus.ToString().ToUpper(),
+            ChippingDateTime = animal.ChippingDateTime.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
             ChipperId = animal.AccountId,
             ChippingLocationPointId = animal.ChippingLocationPoint.LocationPointId,
             VisitedLocations = animal.VisitedLocations.Select(vl => vl.AnimalVisitedLocationId).ToList(), 
-            DeathDateTime = animal.DeathDateTime?.ToString("yyyy-MM-dd"),
+            DeathDateTime = animal.DeathDateTime?.ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture),
         };
     }
 

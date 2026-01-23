@@ -27,6 +27,13 @@ public class Animal
         Gender = GenderType.Other;
         DeathDateTime = null;
     }
+
+    public void SetDeathStatus()
+    {
+        LiveStatus = LiveStatusType.Dead;
+        if (DeathDateTime == null)
+            DeathDateTime = DateTime.UtcNow;
+    }
 }
 
 public enum GenderType

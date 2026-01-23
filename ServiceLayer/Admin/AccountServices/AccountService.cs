@@ -48,7 +48,7 @@ public class AccountService : IAccountService
       _logger.LogInformation("Get accounts by filter options: {FilterFirstName}, {FilterSecondName}, {FilterEmail}",
          filterOptions.filterValues.FirstName, filterOptions.filterValues.LastName, filterOptions.filterValues.Email);
       
-      return query.Page(filterOptions.PageNum-1, filterOptions.PageSize).Select(account => account.ToDto());
+      return query.Page(filterOptions.PageNum-1, filterOptions.Skip, filterOptions.PageSize).Select(account => account.ToDto());
    }
 
    public bool UpdateAccountById(int accountId, UpdateAccountDto dto)

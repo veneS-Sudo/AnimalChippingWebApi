@@ -6,11 +6,9 @@ namespace ServiceLayer.Registration;
 public class UserRegistrationDto : IValidatableObject
 {
     [Required]
-    [StringLength(100)]
     public string FirstName { get; set; } 
     
     [Required] 
-    [StringLength(100)]
     public string LastName { get; set; }
     
     [Required]
@@ -19,7 +17,6 @@ public class UserRegistrationDto : IValidatableObject
     
     [Required]
     [PasswordPropertyText]
-    [StringLength(100, MinimumLength = 6)]
     public string Password { get; set; }
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

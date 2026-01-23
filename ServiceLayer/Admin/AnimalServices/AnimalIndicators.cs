@@ -1,15 +1,16 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace ServiceLayer.Admin.AnimalServices;
 
 public class AnimalIndicators
 {
-    [Required]
+    [JsonPropertyName("height")]
     public float Height { get; set; }
     
-    [Required]
+    [JsonPropertyName("weight")]
     public float Weight { get; set; }
     
-    [Required]
+    [JsonPropertyName("length")]
     public float Length { get; set; }
 }

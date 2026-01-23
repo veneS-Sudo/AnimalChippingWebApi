@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Security.Authentication;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -30,7 +31,8 @@ public class UserAuthenticationHandler : AuthenticationHandler<AuthenticationSch
         
         string? message = null;
         var endpoint = Context.GetEndpoint();
-        if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null)
+        if (endpoint?.Metadata.GetMetadata<IAllowAnonymous>() != null
+            && !Request.Headers.ContainsKey(HeaderNames.Authorization))
         {
             return AuthenticateResult.NoResult();
         }

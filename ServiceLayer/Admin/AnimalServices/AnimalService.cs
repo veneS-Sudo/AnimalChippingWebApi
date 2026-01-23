@@ -30,7 +30,8 @@ public class AnimalService : IAnimalService
     }
 
     public Animal GetAnimalById(long animalId)
-    { CheckAnimalIdWithThrowException(animalId);
+    { 
+        CheckAnimalIdWithThrowException(animalId);
         
         var animal = _context.Animals
             .AsNoTracking()
@@ -60,7 +61,7 @@ public class AnimalService : IAnimalService
             filterOptions.FilterValues.ChippingLocationId, filterOptions.FilterValues.Gender,
             filterOptions.FilterValues.LiveStatus, filterOptions.FilterValues.StartDate,
             filterOptions.FilterValues.EndDate);
-        return query.Page(filterOptions.PageNum-1, filterOptions.PageSize);
+        return query.Page(filterOptions.PageNum-1, filterOptions.Skip, filterOptions.PageSize);
     }
     
     public long AddNewAnimal(AddAnimalDto dto)
@@ -101,7 +102,7 @@ public class AnimalService : IAnimalService
     {
         CheckAnimalIdWithThrowException(animalId);
         CheckLocationPointIdWithThrowException(dto.ChippingLocationPointId);
-        CheckLocationPointIdWithThrowException(dto.AccountId);
+        CheckAccountWithThrowException(dto.AccountId);
         
         var animal = _context.Animals
             .Include(a => a.VisitedLocations)
@@ -120,9 +121,10 @@ public class AnimalService : IAnimalService
         animal.Length = dto.Length;
         animal.Height = dto.Height;
         animal.Gender = dto.Gender;
-        animal.LiveStatus = dto.LiveStatus;
         animal.AccountId = dto.AccountId;
         animal.ChippingLocationPoint = lp;
+        if (dto.LiveStatus == LiveStatusType.Dead)
+            animal.SetDeathStatus();
         
         var result = _context.SaveChanges();
         _logger.LogInformation(

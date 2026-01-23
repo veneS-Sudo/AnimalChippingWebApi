@@ -67,10 +67,10 @@ public class SearchParamsValidationFilterFactory
         {
             var searchModel = invocationContext.GetArgument<SearchDateModel>(searchParamsPosition.Value);
             var problems = new Dictionary<string, string[]>();
-            if (!DateTime.TryParseExact(searchModel.StartDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            if (!DateTime.TryParseExact(searchModel.StartDateTime, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var startDateTimeParsed) && searchModel.StartDateTime is not null)
                 problems.Add("startDateTime", new[] { "'StartDateTime' must be in a format ISO-8601" });
-            if (!DateTime.TryParseExact(searchModel.EndDateTime, "yyyy-MM-dd", CultureInfo.InvariantCulture,
+            if (!DateTime.TryParseExact(searchModel.EndDateTime, "yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture,
                     DateTimeStyles.None, out var endDateTimeParsed) && searchModel.EndDateTime is not null)
                 problems.Add("endDateTime", new[] { "'EndDateTime' must be in a format ISO-8601" });
             if (problems.Any())

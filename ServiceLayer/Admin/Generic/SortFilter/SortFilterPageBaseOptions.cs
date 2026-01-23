@@ -6,7 +6,7 @@ public abstract class SortFilterPageBaseOptions
 public const int DefaultPageSize = 10;
     private int _pageSize = DefaultPageSize;
     private int _pageNum = 1;
-    public readonly int[] PageSizes = { 5, DefaultPageSize, 20, 50, 100, 500, 1000 };
+    public readonly int[] PageSizes = { 1, 5, DefaultPageSize, 20, 50, 100, 500, 1000 };
     
     public int PageSize
     {
@@ -24,6 +24,8 @@ public const int DefaultPageSize = 10;
         get => _pageNum;
         set => _pageNum = value;
     }
+    
+    public int Skip { get; set; }
     
     public int NumPages { get; private set; }
 

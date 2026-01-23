@@ -65,7 +65,7 @@ public class VisitedLocationAnimalService : IVisitedLocationAnimalService
         _logger.LogInformation(
             "Getting visited locations by animal {AnimalId} with search options: {SearchFilterValue}", animalId,
             sortFilterOptions.FilterValue);
-        return query.Page(sortFilterOptions.PageNum-1, sortFilterOptions.PageSize);
+        return query.Page(sortFilterOptions.PageNum-1,sortFilterOptions.Skip,  sortFilterOptions.PageSize);
     }
 
     public AnimalVisitedLocation AddVisitedLocationToAnimal(long animalId, long locationId)
