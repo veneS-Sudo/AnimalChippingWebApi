@@ -66,6 +66,7 @@ builder.Services.AddHostedService<DbMigrationBackgroundService>();
 builder.Services.AddAuthentication("Basic")
     .AddScheme<AuthenticationSchemeOptions, UserAuthenticationHandler>("Basic", null);
 builder.Services.AddAuthorization();
+builder.Services.AddAntiforgery();
 
 var app = builder.Build();
 
@@ -74,6 +75,7 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions()
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
 app.UseHttpsRedirection();
+app.UseAntiforgery();
 app.UseRouting();
 if (!app.Environment.IsDevelopment())
 {

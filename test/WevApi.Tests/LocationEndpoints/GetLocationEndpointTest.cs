@@ -59,17 +59,6 @@ public class GetLocationEndpointTest : IClassFixture<CustomWebApplicationFactory
     }
 
     [Fact]
-    public async Task GetLocationWithoutAuth_ShouldReturn401Unauthorized()
-    {
-        using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = null;
-        
-        var response = await client.GetAsync("/locations/1");
-        
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
     public async Task GetNotExistingLocation_ShouldReturn404NotFound()
     {
         

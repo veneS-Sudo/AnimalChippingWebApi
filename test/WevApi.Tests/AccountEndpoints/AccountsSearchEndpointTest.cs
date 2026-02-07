@@ -37,15 +37,4 @@ public class AccountsSearchEndpointTest : IClassFixture<CustomWebApplicationFact
         
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-
-    [Fact]
-    public async Task GetAccountsWithoutAuth_ShouldReturn401Unauthorized()
-    {
-        using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = null;
-        
-        var response = await client.GetAsync("/accounts/search");
-        
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 }

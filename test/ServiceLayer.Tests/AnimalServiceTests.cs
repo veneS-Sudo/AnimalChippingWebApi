@@ -28,7 +28,7 @@ public class AnimalServiceTests
     [InlineData(9, 9,  10)]
     [InlineData(15, 10, 10)]
     [InlineData(30, 25, 25)]
-    [InlineData(5, 5, 1)]
+    [InlineData(5, 1, 1)]
     public void GetAnimals_ShouldReturnExpectedCountAnimals(int count, int result, int size)
     {
         var options = Open();

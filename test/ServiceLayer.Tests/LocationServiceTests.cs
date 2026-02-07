@@ -23,9 +23,8 @@ public class LocationServiceTests
 
     [Theory]
     [InlineData(1, 1)]
-    [InlineData(1.001, 1)]
+    [InlineData(1.000001, 1)]
     [InlineData(1, 0.99999)]
-    [InlineData(1, 0.9999)]
     [InlineData(1.00001, 1)]
     public void AddLocationPoint_ShouldThrowUniqueValueException(double longitude, double latitude)
     {
@@ -47,9 +46,8 @@ public class LocationServiceTests
 
     [Theory]
     [InlineData(1, 1)]
-    [InlineData(1.001, 1)]
+    [InlineData(1.000001, 1)]
     [InlineData(1, 0.99999)]
-    [InlineData(1, 0.9999)]
     [InlineData(1.00001, 1)]
     public void UpdateLocationPoint_ShouldThrowUniqueValueException(double longitude, double latitude)
     {

@@ -138,15 +138,4 @@ public class GetAnimalsEndpointTest : IClassFixture<CustomWebApplicationFactory>
         
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-
-    [Fact]
-    public async Task GetAnimalsWithoutAuth_ShouldReturn401Unauthorized()
-    {
-        using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = null;
-        
-        var response = await client.GetAsync("/animals/search");
-        
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
 }

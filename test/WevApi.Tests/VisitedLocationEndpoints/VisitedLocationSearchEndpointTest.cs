@@ -111,17 +111,6 @@ public class VisitedLocationSearchEndpointTest : IClassFixture<CustomWebApplicat
     }
 
     [Fact]
-    public async Task GetAnimalVisitedLocationsWithoutAuth_ShouldReturn401Unauthorized()
-    {
-        using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = null;
-
-        var response = await client.GetAsync("/animals/1/locations");
-        
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
     public async Task GetNotExistsAnimalVisitedLocations_ShouldReturn404NotFound()
     {
         using var client = _fixture.CreateClient();

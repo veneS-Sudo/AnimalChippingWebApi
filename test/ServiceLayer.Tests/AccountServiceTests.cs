@@ -29,7 +29,7 @@ public class AccountServiceTests
     [InlineData(9, 9,  10)]
     [InlineData(15, 10, 10)]
     [InlineData(30, 25, 25)]
-    [InlineData(5, 5, 1)]
+    [InlineData(5, 1, 1)]
     public void GetAccounts_ShouldReturnExpectedCountAccounts(int count, int result, int size)
     {
 
@@ -52,7 +52,7 @@ public class AccountServiceTests
             var loggerMock = new Mock<ILogger<AccountService>>();
             var service = new AccountService(context, accountValidatorMock.Object, loggerMock.Object);
             var searchOptions = new AccountSortFilterPageOptions()
-                { PageNum = 1, PageSize = size, filterValues = new AccountSearchFilterValues() };
+                { PageNum = 1, PageSize = size, Skip = 0, filterValues = new AccountSearchFilterValues() };
             var accounts = service.GetAccounts(searchOptions).Select(x => new Account() { AccountId = x.AccountId })
                 .ToList();
             Assert.Equal(result, accounts.Count());

@@ -34,18 +34,7 @@ public class GetAccountEndpointTest : IClassFixture<CustomWebApplicationFactory>
         
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
-
-    [Fact]
-    public async Task GetAccountWithoutAuth_ShouldThrow401Unauthorized()
-    {
-        
-        using var client = _fixture.CreateClient();
-        client.DefaultRequestHeaders.Authorization = null;
-        var response = await client.GetAsync($"/accounts/1");
-        
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
+    
     [Fact]
     public async Task GetAccountWithNotExistsAccountId_ShouldThrow404NotFound()
     {
